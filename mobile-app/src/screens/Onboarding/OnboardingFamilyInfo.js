@@ -37,7 +37,7 @@ const OnboardingFamilyInfo = () => {
 
       <Button
         title="Continuer"
-        onPress={() => navigation.navigate("Summary", {
+        onPress={() => navigation.navigate("Preferences", {
           numAdults,
           numChildren,
           childrenAges

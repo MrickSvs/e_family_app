@@ -23,6 +23,8 @@ const OnboardingSummary = () => {
       <Text>Adultes : {route.params.numAdults}</Text>
       <Text>Enfants : {route.params.numChildren}</Text>
       <Text>Âges : {route.params.childrenAges}</Text>
+      <Text>Type de voyage : {route.params.travelType}</Text>
+      <Text>Budget : {route.params.budget}</Text>
       <Button title="Valider" onPress={handleSubmit} />
     </View>
   );
