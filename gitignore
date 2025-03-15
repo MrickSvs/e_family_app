@@ -1,0 +1,9 @@
+# Node.js
+node_modules/
+.env
+
+# Expo / React Native
+.expo/
+.expo-shared/
+android/
+ios/
