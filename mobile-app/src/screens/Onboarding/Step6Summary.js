@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import { saveOnboardingData } from "../../services/onboardingService";
 
 export default function Step6Summary() {
   const route = useRoute();
@@ -14,17 +15,44 @@ export default function Step6Summary() {
     budget = "Non spécifié",
   } = route.params || {};
 
-  const handleSubmit = () => {
-    navigation.navigate("FamilyTripsScreen", {
-      familyName,
-      adults,
-      children,
-      ages,
-      travelType,
-      budget,
-    });
+  const handleSubmit = async () => {
+    const familyData = {
+      user_id: 1, // Remplace par l'ID réel de l'utilisateur
+      family_name: familyName,
+      members: [
+        ...Array(adults).fill().map((_, i) => ({
+          first_name: `Adulte ${i + 1}`,
+          last_name: familyName,
+          role: "Adulte"
+        })),
+        ...Array(children).fill().map((_, i) => ({
+          first_name: `Enfant ${i + 1}`,
+          last_name: familyName,
+          role: "Enfant",
+          birth_date: ages[i] ? `20${24 - ages[i]}-01-01` : null // Estimation année de naissance
+        }))
+      ],
+      travel_preferences: {
+        travel_type: travelType,
+        budget: budget
+      }
+    };
+
+    const response = await saveOnboardingData(familyData);
+
+    if (response.success) {
+      navigation.navigate("FamilyTripsScreen", {
+        familyName,
+        adults,
+        children,
+        ages,
+        travelType,
+        budget,
+      });
+    } else {
+      Alert.alert("Erreur", response.message);
+    }
   };
-  
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
