@@ -1,42 +1,77 @@
-import React from "react";
-import { View, Text, Button, StyleSheet } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 
 export default function Step6Summary() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { adults, children, ages, travelType, budget } = route.params;
+  const {
+    familyName = "Famille",
+    adults = 1,
+    children = 0,
+    ages = [],
+    travelType = "Non spécifié",
+    budget = "Non spécifié",
+  } = route.params || {};
 
-  const handleSubmit = async () => {
-    const dataToSend = { adults, children, ages, travelType, budget };
-    console.log("Final data:", dataToSend);
-
-    // Envoyer au backend
-    const response = await fetch("http://localhost:5000/api/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dataToSend),
+  const handleSubmit = () => {
+    navigation.navigate("FamilyTripsScreen", {
+      familyName,
+      adults,
+      children,
+      ages,
+      travelType,
+      budget,
     });
-
-    if (response.ok) {
-      navigation.navigate("Home");
-    }
   };
+  
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Récapitulatif</Text>
-      <Text>Nombre d'adultes : {adults}</Text>
-      <Text>Nombre d'enfants : {children}</Text>
-      {children > 0 && <Text>Âges : {ages.join(", ")}</Text>}
-      <Text>Type de voyage : {travelType}</Text>
-      <Text>Budget : {budget}</Text>
-      <Button title="Valider" onPress={handleSubmit} />
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Famille {familyName}</Text>
+      <View style={styles.summaryItem}>
+        <Text style={styles.label}>Adultes :</Text>
+        <Text style={styles.value}>{adults}</Text>
+      </View>
+      <View style={styles.summaryItem}>
+        <Text style={styles.label}>Enfants :</Text>
+        <Text style={styles.value}>{children}</Text>
+      </View>
+      {children > 0 && (
+        <View style={styles.summaryItem}>
+          <Text style={styles.label}>Âges des enfants :</Text>
+          <Text style={styles.value}>{ages.length ? ages.join(", ") : "Non précisé"}</Text>
+        </View>
+      )}
+      <View style={styles.summaryItem}>
+        <Text style={styles.label}>Type de voyage :</Text>
+        <Text style={styles.value}>{travelType}</Text>
+      </View>
+      <View style={styles.summaryItem}>
+        <Text style={styles.label}>Budget :</Text>
+        <Text style={styles.value}>{budget}</Text>
+      </View>
+
+      <TouchableOpacity style={styles.validateButton} onPress={handleSubmit}>
+        <Text style={styles.validateButtonText}>Découvrir mon prochain voyage</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
+  container: { flexGrow: 1, padding: 20, justifyContent: "center", backgroundColor: "#fff" },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 30, textAlign: "center" },
+  summaryItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 15,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ececec",
+  },
+  label: { fontSize: 18, color: "#555" },
+  value: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  validateButton: { backgroundColor: "#0f8066", paddingVertical: 15, borderRadius: 8, marginTop: 30, alignItems: "center" },
+  validateButtonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });

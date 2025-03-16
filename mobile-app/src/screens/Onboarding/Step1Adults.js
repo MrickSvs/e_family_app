@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 export default function Step1Adults() {
   const navigation = useNavigation();
+  const route = useRoute();
   const [adults, setAdults] = useState(2);
 
   const handleNext = () => {
-    navigation.navigate("Step2Children", { adults });
+    navigation.navigate("Step2Children", { 
+      ...route.params,  // ⬅️ Important pour transmettre le familyName
+      adults 
+    });
   };
 
   return (
