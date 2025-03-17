@@ -1,37 +1,79 @@
-// src/screens/ProfileScreen.js
-
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { SafeAreaView, View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import Navbar from "../components/Navbar";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Profil famille</Text>
+    <SafeAreaView style={styles.safeContainer}>
+      {/* En-tête similaire à FamilyTripsScreen */}
+      <View style={styles.topContainer}>
+        <Text style={styles.mainTitle}>Mon Profil</Text>
+        <Text style={styles.subtitle}>Gérer mes informations familiales</Text>
+      </View>
 
-      <TouchableOpacity
-        style={styles.ctaButton}
-        onPress={() => navigation.navigate("FamilyProfile")}
-      >
-        <Text style={styles.ctaButtonText}>Compléter mon profil</Text>
-      </TouchableOpacity>
-    </View>
+      {/* Contenu principal */}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.profileSection}>
+          <Text style={styles.profileTitle}>Profil famille</Text>
+          <TouchableOpacity
+            style={styles.ctaButton}
+            onPress={() => navigation.navigate("FamilyProfile")}
+          >
+            <Text style={styles.ctaButtonText}>Compléter mon profil</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {/* Barre de navigation en bas */}
+      <Navbar />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
+  safeContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "#fff",
   },
-  text: {
-    fontSize: 24,
+  /* Partie haute similaire à FamilyTripsScreen */
+  topContainer: {
+    backgroundColor: "#F7F5ED",
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  mainTitle: {
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#333",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#555",
+  },
+
+  /* Contenu déroulant */
+  scrollContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+
+  /* Section Profil */
+  profileSection: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  profileTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 16,
+    color: "#333",
   },
   ctaButton: {
     backgroundColor: "#0f8066",

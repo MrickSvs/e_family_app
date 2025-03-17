@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/evaneos.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0f8066"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.anonymous.mobile-app"
