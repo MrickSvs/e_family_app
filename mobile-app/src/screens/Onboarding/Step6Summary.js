@@ -41,14 +41,17 @@ export default function Step6Summary() {
     const response = await saveOnboardingData(familyData);
 
     if (response.success) {
-      navigation.navigate("FamilyTripsScreen", {
-        familyName,
-        adults,
-        children,
-        ages,
-        travelType,
-        budget,
-      });
+        navigation.navigate("Main", {
+            screen: "FamilyTripsScreen",
+            params: {
+              familyName,
+              adults,
+              children,
+              ages,
+              travelType,
+              budget,
+            },
+          });
     } else {
       Alert.alert("Erreur", response.message);
     }

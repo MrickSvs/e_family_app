@@ -16,7 +16,7 @@ export default function Step1Adults() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Combien d'adultes voyagent ?</Text>
+      <Text style={styles.title}>🧑 Combien d'adultes voyagent ?</Text>
 
       <View style={styles.optionsContainer}>
         {[1, 2, 3, 4, 5].map((num) => (

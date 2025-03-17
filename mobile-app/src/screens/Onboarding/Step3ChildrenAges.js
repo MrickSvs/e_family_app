@@ -15,7 +15,7 @@ export default function Step3ChildrenAges() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Âges des enfants</Text>
+      <Text style={styles.title}>🎂 Âges des enfants</Text>
       {children === 0 ? (
         <Text style={{ marginVertical: 20 }}>Aucun enfant</Text>
       ) : (

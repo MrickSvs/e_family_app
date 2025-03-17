@@ -13,7 +13,7 @@ export default function Step2Children() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Combien d'enfants ?</Text>
+      <Text style={styles.title}>🧒👦 Combien d'enfants ?</Text>
 
       <View style={styles.optionsContainer}>
         {[0, 1, 2, 3, 4, 5].map((num) => (
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
       textAlign: "center",
     },
     backButtonText: { color: "#fff", fontSize: 16, textAlign: "center"}, 
-    
+
     nextButton: {
       backgroundColor: "#0f8066",
       paddingHorizontal: 25,

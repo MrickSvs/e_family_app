@@ -23,7 +23,7 @@ export default function Step4TravelType() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Quels types de voyage préférez-vous ?</Text>
+      <Text style={styles.title}>🌍 Quels types de voyage préférez-vous ?</Text>
 
       <View style={styles.optionsContainer}>
         {travelOptions.map((option) => (

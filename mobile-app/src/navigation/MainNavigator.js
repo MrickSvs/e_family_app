@@ -4,16 +4,23 @@ import FamilyTripsScreen from "../screens/FamilyTripsScreen";
 import MyTripsScreen from "../screens/MyTripsScreen";
 import AssistanceScreen from "../screens/AssistanceScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import FamilyProfileScreen from "../screens/FamilyProfileScreen";
 
 const Stack = createNativeStackNavigator();
 
 export default function MainNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* Écran principal, affiché par défaut quand on rentre dans Main */}
       <Stack.Screen name="FamilyTripsScreen" component={FamilyTripsScreen} />
+
+      {/* Les autres écrans du menu */}
       <Stack.Screen name="MyTripsScreen" component={MyTripsScreen} />
       <Stack.Screen name="AssistanceScreen" component={AssistanceScreen} />
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      
+      {/* Wizard de complétion */}
+      <Stack.Screen name="FamilyProfile" component={FamilyProfileScreen} />
     </Stack.Navigator>
   );
 }

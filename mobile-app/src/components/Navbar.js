@@ -9,22 +9,34 @@ export default function Navbar() {
 
   return (
     <View style={styles.navbar}>
-      <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("FamilyTripsScreen")}>
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => navigation.navigate("Main", { screen: "FamilyTripsScreen" })}
+      >
         <Ionicons name="map-outline" size={24} color="#0f8066" />
         <Text style={styles.navText}>Itinéraires</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("MyTripsScreen")}>
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => navigation.navigate("Main", { screen: "MyTripsScreen" })}
+      >
         <Ionicons name="calendar-outline" size={24} color="#0f8066" />
         <Text style={styles.navText}>Mes Voyages</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("AssistanceScreen")}>
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => navigation.navigate("Main", { screen: "AssistanceScreen" })}
+      >
         <Ionicons name="help-circle-outline" size={24} color="#0f8066" />
         <Text style={styles.navText}>Assistance</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("ProfileScreen")}>
+      <TouchableOpacity
+        style={styles.navItem}
+        onPress={() => navigation.navigate("Main", { screen: "ProfileScreen" })}
+      >
         <Ionicons name="person-circle-outline" size={24} color="#0f8066" />
         <Text style={styles.navText}>Profil</Text>
       </TouchableOpacity>

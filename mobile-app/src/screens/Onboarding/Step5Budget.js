@@ -15,7 +15,7 @@ export default function Step5Budget() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Quel est votre budget moyen ?</Text>
+      <Text style={styles.title}>💰 Quel est votre budget moyen ?</Text>
 
       <View style={styles.optionsContainer}>
         {budgetOptions.map((option) => (
