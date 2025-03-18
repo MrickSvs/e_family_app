@@ -7,64 +7,86 @@ import {
   Text, 
   ScrollView, 
   Image, 
-  StyleSheet 
+  TouchableOpacity,
+  StyleSheet
 } from "react-native";
-import { useRoute } from "@react-navigation/native";
-import Navbar from "../components/Navbar";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function PastTripDetailScreen() {
   const route = useRoute();
-  const { tripId, title, date, imageUrl } = route.params || {};
-
-  // Exemples de photos souvenirs
-  const memories = [
-    { id: 1, name: "Photo1.jpg", uri: "https://static1.evcdn.net/cdn-cgi/image/width=1200,height=514,quality=70,fit=crop/offer/raw/2022/08/30/6e606193-8d44-4391-987d-a2b82e52cbde.jpg" },
-    { id: 2, name: "Photo2.jpg", uri: "https://thumbs.dreamstime.com/b/selfie-de-famille-en-montagne-131317379.jpg" },  ];
+  const navigation = useNavigation();
+  const { trip } = route.params;
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Bannière */}
-        <View style={styles.banner}>
-          <Image source={{ uri: imageUrl }} style={styles.bannerImage} />
-          <View style={styles.bannerTextContainer}>
-            <Text style={styles.bannerTitle}>{title}</Text>
-            <Text style={styles.bannerDates}>{date}</Text>
+      {/* Header avec bouton retour */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Text style={styles.backButtonText}>Retour</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView>
+        <Image source={{ uri: trip.imageUrl }} style={styles.coverImage} />
+        
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>{trip.title}</Text>
+          <Text style={styles.date}>{trip.date}</Text>
+
+          {/* Note globale */}
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingTitle}>Note globale</Text>
+            <View style={styles.starsContainer}>
+              {[...Array(5)].map((_, i) => (
+                <Ionicons
+                  key={i}
+                  name={i < trip.rating ? "star" : "star-outline"}
+                  size={24}
+                  color="#FFD700"
+                />
+              ))}
+            </View>
           </View>
-        </View>
 
-        {/* Récap voyage */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Récapitulatif du voyage</Text>
-          <Text style={styles.infoText}>
-            Vous êtes partis {date} pour découvrir la magnifique région...
-            {"\n"}{"\n"}
-            Ce voyage a duré 10 jours, avec un itinéraire intense :
-            {"\n"}• Jour 1 : Arrivée, installation{"\n"}• Jour 2 : Visite du parc X{"\n"}...
-          </Text>
-        </View>
+          {/* Description */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>À propos du voyage</Text>
+            <Text style={styles.description}>{trip.description}</Text>
+          </View>
 
-        {/* Photos souvenirs */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos souvenirs</Text>
-          <View style={styles.memoriesContainer}>
-            {memories.map((mem) => (
-              <Image key={mem.id} source={{ uri: mem.uri }} style={styles.memoryImage} />
+          {/* Souvenirs */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Souvenirs mémorables</Text>
+            {trip.memories?.map((memory, index) => (
+              <View key={index} style={styles.memoryItem}>
+                <Text style={styles.memoryTitle}>{memory.title}</Text>
+                <Text style={styles.memoryText}>{memory.description}</Text>
+              </View>
             ))}
           </View>
-        </View>
 
-        {/* Avis / Retours */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Votre retour d'expérience</Text>
-          <Text style={styles.infoText}>
-            Merci d’avoir voyagé avec nous ! Laissez-nous un avis pour aider d’autres familles.
-          </Text>
-          {/* Ici tu pourras ajouter un composant de rating ou un bouton redirigeant vers un formulaire */}
+          {/* Photos */}
+          {trip.gallery && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Galerie photos</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {trip.gallery.map((photo, index) => (
+                  <Image
+                    key={index}
+                    source={{ uri: photo }}
+                    style={styles.galleryImage}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
       </ScrollView>
-
-      <Navbar />
     </SafeAreaView>
   );
 }
@@ -74,59 +96,89 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  scrollContent: {
-    paddingBottom: 80,
-  },
-  banner: {
-    backgroundColor: "#F7F5ED",
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: '#eee',
+    backgroundColor: '#fff',
   },
-  bannerImage: {
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#333',
+  },
+  coverImage: {
     width: "100%",
-    height: 180,
+    height: 250,
   },
-  bannerTextContainer: {
+  contentContainer: {
     padding: 16,
   },
-  bannerTitle: {
-    fontSize: 20,
+  title: {
+    fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 4,
     color: "#333",
+    marginBottom: 8,
   },
-  bannerDates: {
-    fontSize: 14,
-    color: "#555",
+  date: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 16,
   },
-
+  ratingContainer: {
+    marginBottom: 24,
+  },
+  ratingTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 8,
+  },
+  starsContainer: {
+    flexDirection: "row",
+  },
   section: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: "600",
     color: "#333",
+    marginBottom: 12,
   },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 20,
+  description: {
+    fontSize: 16,
     color: "#555",
+    lineHeight: 24,
   },
-
-  // Photos souvenirs
-  memoriesContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+  memoryItem: {
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 8,
   },
-  memoryImage: {
-    width: 120,
-    height: 80,
-    borderRadius: 6,
-    marginRight: 8,
-    marginBottom: 8,
+  memoryTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  memoryText: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
+  },
+  galleryImage: {
+    width: 200,
+    height: 150,
+    marginRight: 12,
+    borderRadius: 8,
   },
 });

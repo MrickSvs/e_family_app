@@ -1,7 +1,6 @@
 import React from "react";
 import { SafeAreaView, View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import Navbar from "../components/Navbar";
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -26,9 +25,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-
-      {/* Barre de navigation en bas */}
-      <Navbar />
     </SafeAreaView>
   );
 }

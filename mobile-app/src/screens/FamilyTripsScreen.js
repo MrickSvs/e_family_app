@@ -1,10 +1,10 @@
 import React from "react";
 import { SafeAreaView, View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { useRoute } from "@react-navigation/native";
-import Navbar from "../components/Navbar";
+import { useRoute, useNavigation } from "@react-navigation/native";
 
 export default function FamilyTripsScreen() {
   const route = useRoute();
+  const navigation = useNavigation();
 
   const { familyName, adults, children, ages, travelType, budget } = route.params || {};
 
@@ -16,19 +16,104 @@ export default function FamilyTripsScreen() {
       type: "Nature & découverte",
       description:
         "Idéal pour les jeunes enfants grâce aux courtes distances et hébergements confortables.",
-      imageUrl:
-        "https://www.tracedirecte.com/media/original_images/parc-national-manuel-antonio-costa-rica.jpg.1920x0_q85_format-jpg.jpg",
+      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=3840,height=2160,quality=70,fit=crop/offer/raw/2023/11/30/cbb4bd64-8c1d-44b7-9d51-c0847f5d8c80.jpg",
       tags: ["Parfait avec bébé", "Coup de cœur familles"],
+      gallery: [
+        "https://static1.evcdn.net/cdn-cgi/image/width=3840,height=2160,quality=70,fit=crop/offer/raw/2023/11/30/cbb4bd64-8c1d-44b7-9d51-c0847f5d8c80.jpg",
+        "https://static1.evcdn.net/cdn-cgi/image/width=3840,height=2160,quality=70,fit=crop/offer/raw/2023/11/30/cbb4bd64-8c1d-44b7-9d51-c0847f5d8c80.jpg",
+        "https://static1.evcdn.net/cdn-cgi/image/width=3840,height=2160,quality=70,fit=crop/offer/raw/2023/11/30/cbb4bd64-8c1d-44b7-9d51-c0847f5d8c80.jpg"
+      ],
+      itinerary: [
+        {
+          day: 1,
+          title: "Arrivée à San José",
+          description: "Accueil à l'aéroport et transfert vers votre hôtel. Temps libre pour vous installer et découvrir la capitale."
+        },
+        {
+          day: 2,
+          title: "Parc national Tortuguero",
+          description: "Départ matinal pour le parc national Tortuguero. Croisière sur les canaux pour observer la faune locale."
+        },
+        {
+          day: 3,
+          title: "Plage et détente",
+          description: "Journée de détente sur la plage avec activités adaptées aux enfants."
+        }
+      ],
+      practicalInfo: {
+        difficulty: "Facile",
+        transport: "Inclus (minivan climatisé)",
+        accommodation: "Hôtels 3-4 étoiles",
+        meals: "Petit-déjeuner inclus",
+        included: ["Guide francophone", "Transport", "Hébergement", "Activités mentionnées"],
+        notIncluded: ["Vols internationaux", "Repas non mentionnés", "Dépenses personnelles"]
+      },
+      reviews: [
+        {
+          author: "Marie",
+          rating: 5,
+          date: "15/02/2024",
+          text: "Un voyage parfait pour notre famille avec deux enfants en bas âge. Les distances sont courtes et les activités bien adaptées."
+        },
+        {
+          author: "Thomas",
+          rating: 4,
+          date: "10/01/2024",
+          text: "Très beau voyage, les enfants ont adoré voir les animaux. Les hébergements sont confortables."
+        }
+      ],
+      price: "À partir de 2 490€",
+      priceDetails: "Prix par personne, base double"
     },
     {
       id: 2,
-      title: "Italie : Douceur Toscane",
+      title: "Thaïlande, rencontres ethniques avec vos ados",
       duration: "7 jours",
-      type: "Culture & détente",
+      type: "Exploration",
       description:
-        "Un rythme adapté, des découvertes culturelles et une gastronomie accessible à tous.",
-      imageUrl: "https://media.routard.com/image/17/9/fb-meilleur-toscane.1495179.jpg",
+        "Partez visiter les montagnes du Nord aux lacs du Sud dans un rythme adapté a tous",
+      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/07/27/57adf10e-50de-47b2-b07d-02d0d1ab8167.jpg",
       tags: ["Facile avec enfants en bas âge"],
+      gallery: [
+        "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/07/27/57adf10e-50de-47b2-b07d-02d0d1ab8167.jpg",
+        "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/07/27/57adf10e-50de-47b2-b07d-02d0d1ab8167.jpg",
+        "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/07/27/57adf10e-50de-47b2-b07d-02d0d1ab8167.jpg"
+      ],
+      itinerary: [
+        {
+          day: 1,
+          title: "Arrivée à Chiang Mai",
+          description: "Accueil à l'aéroport et transfert vers votre hôtel. Temps libre pour découvrir la ville."
+        },
+        {
+          day: 2,
+          title: "Visite des temples",
+          description: "Découverte des temples historiques de Chiang Mai avec un guide local."
+        },
+        {
+          day: 3,
+          title: "Rencontre avec les ethnies",
+          description: "Journée d'immersion dans les villages des ethnies du Nord."
+        }
+      ],
+      practicalInfo: {
+        difficulty: "Modéré",
+        transport: "Inclus (minivan climatisé)",
+        accommodation: "Hôtels 3-4 étoiles",
+        meals: "Petit-déjeuner inclus",
+        included: ["Guide francophone", "Transport", "Hébergement", "Activités mentionnées"],
+        notIncluded: ["Vols internationaux", "Repas non mentionnés", "Dépenses personnelles"]
+      },
+      reviews: [
+        {
+          author: "Sophie",
+          rating: 5,
+          date: "20/01/2024",
+          text: "Une expérience culturelle enrichissante pour toute la famille. Les ados ont particulièrement apprécié les rencontres avec les ethnies."
+        }
+      ],
+      price: "À partir de 1 890€",
+      priceDetails: "Prix par personne, base double"
     },
     {
       id: 3,
@@ -83,14 +168,21 @@ export default function FamilyTripsScreen() {
                 </Text>
               ))}
             </View>
-            <TouchableOpacity style={styles.ctaButton}>
+            {trip.price && (
+              <View style={styles.priceContainer}>
+                <Text style={styles.price}>{trip.price}</Text>
+                <Text style={styles.priceDetails}>{trip.priceDetails}</Text>
+              </View>
+            )}
+            <TouchableOpacity 
+              style={styles.ctaButton}
+              onPress={() => navigation.navigate('TripDetail', { trip, isPast: false })}
+            >
               <Text style={styles.ctaText}>Découvrir ce voyage</Text>
             </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
-
-      <Navbar />
     </SafeAreaView>
   );
 }
@@ -197,5 +289,19 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 14,
+  },
+  priceContainer: {
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0f8066",
+  },
+  priceDetails: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
   },
 });

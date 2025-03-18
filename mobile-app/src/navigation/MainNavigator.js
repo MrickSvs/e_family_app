@@ -7,10 +7,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import FamilyProfileScreen from "../screens/FamilyProfileScreen";
 import UpcomingTripDetailScreen from "../screens/UpcomingTripDetailScreen";
 import PastTripDetailScreen from "../screens/PastTripDetailScreen";
-
-
-
-
+import TripDetailScreen from "../screens/TripDetailScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -28,9 +25,10 @@ export default function MainNavigator() {
       {/* Wizard de complétion */}
       <Stack.Screen name="FamilyProfile" component={FamilyProfileScreen} />
 
-        {/* Ecran de voyage */}
+      {/* Ecran de voyage */}
       <Stack.Screen name="UpcomingTripDetail" component={UpcomingTripDetailScreen} />
       <Stack.Screen name="PastTripDetail" component={PastTripDetailScreen} />
+      <Stack.Screen name="TripDetail" component={TripDetailScreen} />
     </Stack.Navigator>
   );
 }

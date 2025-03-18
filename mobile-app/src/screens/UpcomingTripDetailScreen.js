@@ -1,5 +1,3 @@
-// src/screens/UpcomingTripDetailScreen.js
-
 import React, { useState } from "react";
 import { 
   SafeAreaView, 
@@ -13,7 +11,6 @@ import {
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons"; // ou autre lib d'icônes
-import Navbar from "../components/Navbar";
   
 export default function UpcomingTripDetailScreen() {
   const route = useRoute();
@@ -62,6 +59,17 @@ export default function UpcomingTripDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
+      {/* Header avec bouton retour */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Text style={styles.backButtonText}>Retour</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Bannière */}
         <View style={styles.banner}>
@@ -137,8 +145,6 @@ export default function UpcomingTripDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Navbar en bas */}
-      <Navbar />
     </SafeAreaView>
   );
 }
@@ -254,5 +260,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: "#555",
+  },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#333',
   },
 });
