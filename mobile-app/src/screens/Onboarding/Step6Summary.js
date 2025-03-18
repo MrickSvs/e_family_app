@@ -2,6 +2,16 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { saveOnboardingData } from "../../services/onboardingService";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Fonction pour générer un UUID valide
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 export default function Step6Summary() {
   const route = useRoute();
@@ -16,44 +26,52 @@ export default function Step6Summary() {
   } = route.params || {};
 
   const handleSubmit = async () => {
-    const familyData = {
-      user_id: 1, // Remplace par l'ID réel de l'utilisateur
-      family_name: familyName,
-      members: [
-        ...Array(adults).fill().map((_, i) => ({
-          first_name: `Adulte ${i + 1}`,
-          last_name: familyName,
-          role: "Adulte"
-        })),
-        ...Array(children).fill().map((_, i) => ({
-          first_name: `Enfant ${i + 1}`,
-          last_name: familyName,
-          role: "Enfant",
-          birth_date: ages[i] ? `20${24 - ages[i]}-01-01` : null // Estimation année de naissance
-        }))
-      ],
-      travel_preferences: {
-        travel_type: travelType,
-        budget: budget
+    try {
+      // Générer un UUID valide
+      const deviceId = generateUUID();
+      await AsyncStorage.setItem('deviceId', deviceId);
+
+      const familyData = {
+        device_id: deviceId,
+        family_name: familyName,
+        members: [
+          ...Array(adults).fill().map((_, i) => ({
+            first_name: `Adulte ${i + 1}`,
+            last_name: familyName,
+            role: "Adulte"
+          })),
+          ...Array(children).fill().map((_, i) => ({
+            first_name: `Enfant ${i + 1}`,
+            last_name: familyName,
+            role: "Enfant",
+            birth_date: ages[i] ? `20${24 - ages[i]}-01-01` : null
+          }))
+        ],
+        travel_preferences: {
+          travel_type: travelType,
+          budget: budget
+        }
+      };
+
+      const response = await saveOnboardingData(familyData);
+
+      if (response.success) {
+        // Sauvegarder les préférences de voyage localement
+        await AsyncStorage.setItem('familyPreferences', JSON.stringify({
+          travel_type: travelType,
+          budget: budget
+        }));
+
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Main", params: { screen: "FamilyTripsScreen" } }],
+        });
+      } else {
+        Alert.alert("Erreur", response.message);
       }
-    };
-
-    const response = await saveOnboardingData(familyData);
-
-    if (response.success) {
-        navigation.navigate("Main", {
-            screen: "FamilyTripsScreen",
-            params: {
-              familyName,
-              adults,
-              children,
-              ages,
-              travelType,
-              budget,
-            },
-          });
-    } else {
-      Alert.alert("Erreur", response.message);
+    } catch (error) {
+      console.error("Erreur lors de l'onboarding:", error);
+      Alert.alert("Erreur", "Une erreur est survenue lors de l'enregistrement des données.");
     }
   };
 

@@ -1,12 +1,47 @@
-import React from "react";
-import { SafeAreaView, View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import React, { useState, useEffect } from "react";
+import { SafeAreaView, View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { getFamilyInfo } from "../services/familyService";
 
 export default function FamilyTripsScreen() {
-  const route = useRoute();
   const navigation = useNavigation();
+  const [familyData, setFamilyData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const { familyName, adults, children, ages, travelType, budget } = route.params || {};
+  useEffect(() => {
+    loadFamilyData();
+  }, []);
+
+  const loadFamilyData = async () => {
+    try {
+      const data = await getFamilyInfo();
+      setFamilyData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.safeContainer, styles.centerContainer]}>
+        <ActivityIndicator size="large" color="#0f8066" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.safeContainer, styles.centerContainer]}>
+        <Text style={styles.errorText}>Une erreur est survenue: {error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={loadFamilyData}>
+          <Text style={styles.retryText}>Réessayer</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
 
   const trips = [
     {
@@ -143,11 +178,11 @@ export default function FamilyTripsScreen() {
       <View style={styles.topContainer}>
         <Text style={styles.mainTitle}>Voyages sélectionnés</Text>
         <Text style={styles.subtitle}>
-          Famille {familyName} • {adults} adulte{adults > 1 ? "s" : ""}, {children} enfant
-          {children > 1 ? "s" : ""} ({Array.isArray(ages) ? ages.join(", ") : "?"} ans)
+          Famille {familyData?.familyName} • {familyData?.adults} adulte{familyData?.adults > 1 ? "s" : ""}, {familyData?.children} enfant
+          {familyData?.children > 1 ? "s" : ""} ({familyData?.ages?.join(", ") || "?"} ans)
         </Text>
         <Text style={styles.familyInfo}>
-          Type de voyage : {travelType} • Budget : {budget}
+          Type de voyage : {Array.isArray(familyData?.travelType) ? familyData.travelType.join(", ") : "Non spécifié"} • Budget : {familyData?.budget}
         </Text>
       </View>
 
@@ -303,5 +338,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginTop: 2,
+  },
+  centerContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ff0000',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#0f8066',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

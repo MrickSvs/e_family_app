@@ -1,4 +1,5 @@
 // App.js
+import 'react-native-gesture-handler';
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Image } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
