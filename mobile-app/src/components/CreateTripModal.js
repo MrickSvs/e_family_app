@@ -9,31 +9,23 @@ import {
     ScrollView,
     Alert,
     Platform,
-    Image,
-    Dimensions
+    Dimensions,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { createTrip } from '../services/tripService';
-import { LinearGradient } from 'expo-linear-gradient';
+import { theme } from '../styles/theme';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const MODAL_HEIGHT = height * 0.95;
 
 export default function CreateTripModal({ visible, onClose, itinerary, familyMembers }) {
-    console.log('CreateTripModal - Props reçues:', {
-        visible,
-        itinerary: itinerary ? {
-            id: itinerary.id,
-            title: itinerary.title
-        } : null,
-        familyMembersCount: familyMembers?.length
-    });
-
     const [estimatedDate, setEstimatedDate] = useState(new Date());
     const [notes, setNotes] = useState('');
     const [selectedMembers, setSelectedMembers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
+    const [duration, setDuration] = useState(itinerary?.duration || 0);
 
     const handleCreateTrip = async () => {
         if (selectedMembers.length === 0) {
@@ -41,24 +33,25 @@ export default function CreateTripModal({ visible, onClose, itinerary, familyMem
             return;
         }
 
+        if (!duration || duration < 1) {
+            Alert.alert('Attention', 'Veuillez spécifier une durée valide');
+            return;
+        }
+
         try {
             setLoading(true);
-            console.log('Début de la création du voyage');
             const tripData = {
                 itinerary_id: itinerary.id,
                 estimated_date: estimatedDate.toISOString().split('T')[0],
                 notes: notes.trim(),
-                participants: selectedMembers.map(m => m.id)
+                participants: selectedMembers.map(m => m.id),
+                duration: parseInt(duration)
             };
-            console.log('Données du voyage à créer:', tripData);
             
             const response = await createTrip(tripData);
-            console.log('Réponse de création du voyage:', response);
-            
             Alert.alert('Succès', 'Votre voyage a été créé avec succès !');
             onClose();
         } catch (error) {
-            console.error('Erreur lors de la création du voyage:', error);
             Alert.alert('Erreur', error.message || 'Une erreur est survenue lors de la création du voyage');
         } finally {
             setLoading(false);
@@ -72,40 +65,43 @@ export default function CreateTripModal({ visible, onClose, itinerary, familyMem
         }
     };
 
+    const handleDurationChange = (text) => {
+        // Ne permettre que les nombres
+        const numericValue = text.replace(/[^0-9]/g, '');
+        if (numericValue === '' || parseInt(numericValue) > 0) {
+            setDuration(numericValue);
+        }
+    };
+
     return (
         <Modal visible={visible} animationType="slide" transparent={true}>
             <View style={styles.overlay}>
                 <View style={styles.modalContent}>
-                    {/* Header avec image et dégradé */}
-                    <View style={styles.headerContainer}>
-                        <Image 
-                            source={{ uri: itinerary?.imageUrl }} 
-                            style={styles.headerImage}
-                        />
-                        <LinearGradient
-                            colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0)']}
-                            style={styles.headerGradient}
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <TouchableOpacity 
+                            style={styles.closeButton}
+                            onPress={onClose}
                         >
-                            <TouchableOpacity 
-                                style={styles.closeButton}
-                                onPress={onClose}
-                            >
-                                <Ionicons name="close" size={24} color="#fff" />
-                            </TouchableOpacity>
+                            <Ionicons name="close" size={24} color="#333" />
+                        </TouchableOpacity>
+                        <View style={styles.headerContent}>
                             <Text style={styles.headerTitle}>Créer un voyage</Text>
                             <Text style={styles.headerSubtitle}>{itinerary?.title}</Text>
-                        </LinearGradient>
+                        </View>
                     </View>
 
                     <ScrollView style={styles.scrollContent}>
                         {/* Section Date */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Date estimée du voyage</Text>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="calendar-outline" size={24} color={theme.colors.primary} />
+                                <Text style={styles.sectionTitle}>Date estimée du voyage</Text>
+                            </View>
                             <TouchableOpacity
                                 style={styles.datePickerButton}
                                 onPress={() => setShowDatePicker(true)}
                             >
-                                <Ionicons name="calendar-outline" size={24} color="#0f8066" />
                                 <Text style={styles.datePickerButtonText}>
                                     {estimatedDate.toLocaleDateString('fr-FR', {
                                         day: 'numeric',
@@ -126,13 +122,36 @@ export default function CreateTripModal({ visible, onClose, itinerary, familyMem
                             )}
                         </View>
 
+                        {/* Section Durée */}
+                        <View style={styles.section}>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
+                                <Text style={styles.sectionTitle}>Durée du voyage</Text>
+                            </View>
+                            <View style={styles.durationContainer}>
+                                <TextInput
+                                    style={styles.durationInput}
+                                    keyboardType="numeric"
+                                    value={duration.toString()}
+                                    onChangeText={handleDurationChange}
+                                    placeholder="Nombre de jours"
+                                    placeholderTextColor="#999"
+                                    maxLength={3}
+                                />
+                                <Text style={styles.durationUnit}>jours</Text>
+                            </View>
+                        </View>
+
                         {/* Section Notes */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Notes supplémentaires</Text>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="pencil-outline" size={24} color={theme.colors.primary} />
+                                <Text style={styles.sectionTitle}>Notes supplémentaires</Text>
+                            </View>
                             <TextInput
                                 style={styles.notesInput}
                                 multiline
-                                numberOfLines={4}
+                                numberOfLines={3}
                                 placeholder="Ajoutez des précisions sur votre voyage..."
                                 placeholderTextColor="#999"
                                 value={notes}
@@ -142,7 +161,10 @@ export default function CreateTripModal({ visible, onClose, itinerary, familyMem
 
                         {/* Section Participants */}
                         <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Participants</Text>
+                            <View style={styles.sectionHeader}>
+                                <Ionicons name="people-outline" size={24} color={theme.colors.primary} />
+                                <Text style={styles.sectionTitle}>Participants</Text>
+                            </View>
                             <Text style={styles.sectionSubtitle}>
                                 Sélectionnez les membres qui participeront au voyage
                             </Text>
@@ -169,7 +191,7 @@ export default function CreateTripModal({ visible, onClose, itinerary, familyMem
                                             <Ionicons
                                                 name={member.role === 'Adulte' ? 'person' : 'body-outline'}
                                                 size={24}
-                                                color={selectedMembers.includes(member) ? '#fff' : '#0f8066'}
+                                                color={selectedMembers.includes(member) ? '#fff' : theme.colors.primary}
                                             />
                                         </View>
                                         <Text style={[
@@ -222,82 +244,71 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        height: '90%',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        height: MODAL_HEIGHT,
     },
-    headerContainer: {
-        height: 200,
-        position: 'relative',
-    },
-    headerImage: {
-        width: '100%',
-        height: '100%',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-    },
-    headerGradient: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '100%',
-        padding: 20,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
+    header: {
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#eee',
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     closeButton: {
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        zIndex: 1,
+        padding: 8,
+        marginRight: 12,
+    },
+    headerContent: {
+        flex: 1,
     },
     headerTitle: {
-        color: '#fff',
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
-        marginTop: 40,
+        color: '#333',
+        marginBottom: 4,
     },
     headerSubtitle: {
-        color: '#fff',
-        fontSize: 18,
-        marginTop: 8,
+        fontSize: 16,
+        color: '#666',
     },
     scrollContent: {
-        padding: 20,
+        padding: 16,
     },
     section: {
-        marginBottom: 24,
+        marginBottom: 20,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
         color: '#333',
-        marginBottom: 8,
+        marginLeft: 12,
     },
     sectionSubtitle: {
         fontSize: 14,
         color: '#666',
-        marginBottom: 16,
+        marginBottom: 12,
     },
     datePickerButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: '#f5f5f5',
-        padding: 16,
+        padding: 12,
         borderRadius: 12,
-        marginTop: 8,
+        marginTop: 4,
     },
     datePickerButtonText: {
         fontSize: 16,
         color: '#333',
-        marginLeft: 12,
     },
     notesInput: {
         backgroundColor: '#f5f5f5',
         borderRadius: 12,
-        padding: 16,
-        minHeight: 120,
+        padding: 12,
+        minHeight: 100,
         fontSize: 16,
         color: '#333',
         textAlignVertical: 'top',
@@ -306,42 +317,42 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        marginTop: 8,
+        marginTop: 4,
     },
     participantCard: {
-        width: (width - 60) / 2,
+        width: (width - 48) / 2,
         backgroundColor: '#f5f5f5',
         borderRadius: 12,
-        padding: 16,
-        marginBottom: 16,
+        padding: 12,
+        marginBottom: 12,
         alignItems: 'center',
     },
     participantCardSelected: {
-        backgroundColor: '#0f8066',
+        backgroundColor: theme.colors.primary,
     },
     participantIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: '#fff',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 6,
     },
     participantIconSelected: {
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
     },
     participantName: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '600',
         color: '#333',
-        marginBottom: 4,
+        marginBottom: 2,
     },
     participantNameSelected: {
         color: '#fff',
     },
     participantRole: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#666',
     },
     participantRoleSelected: {
@@ -349,13 +360,13 @@ const styles = StyleSheet.create({
     },
     actionButtons: {
         flexDirection: 'row',
-        padding: 20,
+        padding: 16,
         borderTopWidth: 1,
         borderTopColor: '#eee',
     },
     button: {
         flex: 1,
-        paddingVertical: 16,
+        paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
     },
@@ -364,7 +375,7 @@ const styles = StyleSheet.create({
         marginRight: 8,
     },
     createButton: {
-        backgroundColor: '#0f8066',
+        backgroundColor: theme.colors.primary,
         marginLeft: 8,
     },
     cancelButtonText: {
@@ -376,5 +387,25 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    durationContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        marginTop: 4,
+    },
+    durationInput: {
+        flex: 1,
+        padding: 12,
+        fontSize: 16,
+        color: '#333',
+        textAlign: 'center',
+    },
+    durationUnit: {
+        fontSize: 16,
+        color: '#666',
+        marginLeft: 8,
     },
 }); 

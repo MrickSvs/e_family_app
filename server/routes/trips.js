@@ -8,7 +8,8 @@ const tripSchema = Joi.object({
     itinerary_id: Joi.number().required(),
     estimated_date: Joi.date().iso().required(),
     notes: Joi.string().allow('').optional(),
-    participants: Joi.array().items(Joi.number()).min(1).required()
+    participants: Joi.array().items(Joi.number()).min(1).required(),
+    duration: Joi.number().integer().min(1).required()
 });
 
 // Middleware de validation
@@ -60,14 +61,14 @@ router.post('/trips', validateTrip, async (req, res) => {
         }
 
         const family_id = familyResult.rows[0].id;
-        const { itinerary_id, estimated_date, notes, participants } = req.body;
+        const { itinerary_id, estimated_date, notes, participants, duration } = req.body;
 
         // 1. Créer le voyage
         const tripResult = await pool.query(`
-            INSERT INTO trips (family_id, itinerary_id, estimated_date, notes, status)
-            VALUES ($1, $2, $3, $4, 'planifié')
+            INSERT INTO trips (family_id, itinerary_id, estimated_date, notes, status, duration)
+            VALUES ($1, $2, $3, $4, 'planifié', $5)
             RETURNING id
-        `, [family_id, itinerary_id, estimated_date, notes]);
+        `, [family_id, itinerary_id, estimated_date, notes, duration]);
 
         const trip_id = tripResult.rows[0].id;
 
