@@ -1,50 +1,216 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, SafeAreaView, Animated } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors, typography, spacing, borderRadius, commonStyles } from '../../styles/onboardingStyles';
+import OnboardingButton from '../../components/OnboardingButton';
 
 export default function Step1Adults() {
   const navigation = useNavigation();
   const route = useRoute();
   const [adults, setAdults] = useState(2);
 
+  const handleIncrement = () => {
+    if (adults < 8) {
+      setAdults(adults + 1);
+    }
+  };
+
+  const handleDecrement = () => {
+    if (adults > 1) {
+      setAdults(adults - 1);
+    }
+  };
+
   const handleNext = () => {
     navigation.navigate("Step2Children", { 
-      ...route.params,  // ⬅️ Important pour transmettre le familyName
+      ...route.params,
       adults 
     });
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🧑 Combien d'adultes voyagent ?</Text>
-
-      <View style={styles.optionsContainer}>
-        {[1, 2, 3, 4, 5].map((num) => (
-          <TouchableOpacity
-            key={num}
-            style={[styles.optionButton, adults === num && styles.optionSelected]}
-            onPress={() => setAdults(num)}
+    <SafeAreaView style={commonStyles.container}>
+      <View style={styles.headerContainer}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <Text style={[styles.optionText, adults === num && styles.optionTextSelected]}>{num}</Text>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-        ))}
+          <Text style={styles.headerTitle}>Composition familiale</Text>
+        </View>
+        <Text style={styles.headerSubtitle}>Combien d'adultes voyagent ?</Text>
       </View>
 
-      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Text style={styles.nextButtonText}>Continuer</Text>
-      </TouchableOpacity>
-    </View>
+      <View style={styles.contentContainer}>
+        <View style={styles.pickerContainer}>
+          <TouchableOpacity 
+            style={[styles.pickerButton, adults <= 1 && styles.pickerButtonDisabled]} 
+            onPress={handleDecrement}
+            disabled={adults <= 1}
+          >
+            <MaterialCommunityIcons 
+              name="minus" 
+              size={32} 
+              color={adults <= 1 ? colors.text.disabled : colors.primary} 
+            />
+          </TouchableOpacity>
+
+          <View style={styles.numberContainer}>
+            <View style={styles.numberCircle}>
+              <Text style={styles.numberText}>{adults}</Text>
+            </View>
+            <Text style={styles.numberLabel}>
+              {adults === 1 ? 'adulte' : 'adultes'}
+            </Text>
+            <View style={styles.iconRow}>
+              {[...Array(adults)].map((_, index) => (
+                <MaterialCommunityIcons
+                  key={index}
+                  name="account"
+                  size={24}
+                  color={colors.primary}
+                  style={styles.personIcon}
+                />
+              ))}
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.pickerButton, adults >= 8 && styles.pickerButtonDisabled]} 
+            onPress={handleIncrement}
+            disabled={adults >= 8}
+          >
+            <MaterialCommunityIcons 
+              name="plus" 
+              size={32} 
+              color={adults >= 8 ? colors.text.disabled : colors.primary} 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <OnboardingButton
+          title="Continuer"
+          onPress={handleNext}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 22, fontWeight: "bold", marginVertical: 20 },
-  optionsContainer: { flexDirection: "row", justifyContent: "center", marginVertical: 20 },
-  optionButton: { backgroundColor: "#ededed", margin: 5, padding: 15, borderRadius: 8 },
-  optionSelected: { backgroundColor: "#0f8066" },
-  optionText: { fontSize: 18 },
-  optionTextSelected: { color: "#fff" },
-  nextButton: { backgroundColor: "#0f8066", paddingHorizontal: 25, paddingVertical: 10, borderRadius: 8, marginTop: 20 },
-  nextButtonText: { color: "#fff", fontSize: 16 },
+  headerContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.md,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  backButton: {
+    padding: spacing.sm,
+    marginRight: spacing.md,
+    marginLeft: -spacing.sm,
+  },
+  headerTitle: {
+    ...typography.h1,
+    color: colors.text.primary,
+  },
+  headerSubtitle: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    padding: spacing.lg,
+  },
+  pickerButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  pickerButtonDisabled: {
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+  },
+  numberContainer: {
+    alignItems: 'center',
+    marginHorizontal: spacing.xl,
+  },
+  numberCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 5.84,
+    elevation: 5,
+  },
+  numberText: {
+    ...typography.h1,
+    fontSize: 36,
+    color: colors.text.light,
+    fontWeight: 'bold',
+  },
+  numberLabel: {
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    maxWidth: 200,
+  },
+  personIcon: {
+    marginHorizontal: 4,
+  },
+  buttonContainer: {
+    padding: spacing.lg,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
 });

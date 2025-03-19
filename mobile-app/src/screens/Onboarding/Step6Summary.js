@@ -1,169 +1,209 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
-import { saveOnboardingData } from "../../services/onboardingService";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Fonction pour générer un UUID valide
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, SafeAreaView, ScrollView, Alert } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors, typography, spacing, borderRadius, commonStyles } from '../../styles/onboardingStyles';
+import OnboardingButton from '../../components/OnboardingButton';
 
 export default function Step6Summary() {
-  const route = useRoute();
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  
-  const {
-    familyName = "Famille",
-    adults = 1,
-    children = 0,
-    ages = [],
-    travelType = "Non spécifié",
-    budget = "Non spécifié",
-  } = route.params || {};
+  const route = useRoute();
+  const { familyName, adults, children, childrenAges, travel_preferences, budget } = route.params;
 
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const handleSubmit = () => {
+    // TODO: Envoyer les données au backend
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Main' }],
+    });
+  };
 
-      // Générer un UUID valide
-      const deviceId = generateUUID();
-      await AsyncStorage.setItem('device_id', deviceId);
-
-      const familyData = {
-        device_id: deviceId,
-        family_name: familyName,
-        members: [
-          ...Array(adults).fill().map((_, i) => ({
-            first_name: "Prénom",
-            last_name: familyName,
-            role: "Adulte",
-            birth_date: "2000-01-01"
-          })),
-          ...Array(children).fill().map((_, i) => ({
-            first_name: `Enfant ${i + 1}`,
-            last_name: familyName,
-            role: "Enfant",
-            birth_date: ages[i] ? `20${24 - ages[i]}-01-01` : null
-          }))
-        ],
-        travel_preferences: {
-          travel_type: travelType,
-          budget: budget
-        }
-      };
-
-      const response = await saveOnboardingData(familyData);
-
-      if (response.success) {
-        // Sauvegarder les préférences de voyage localement
-        await AsyncStorage.setItem('familyPreferences', JSON.stringify({
-          travel_type: travelType,
-          budget: budget
-        }));
-
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "Main", params: { screen: "FamilyTripsScreen" } }],
-        });
-      } else {
-        // Afficher les erreurs de validation s'il y en a
-        if (response.errors) {
-          const errorMessages = response.errors.map(error => `${error.field}: ${error.message}`).join('\n');
-          setError(`Erreurs de validation:\n${errorMessages}`);
-        } else {
-          setError(response.message);
-        }
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'onboarding:", error);
-      setError("Une erreur est survenue lors de l'enregistrement des données.");
-    } finally {
-      setLoading(false);
+  const getBudgetLabel = (budgetId) => {
+    switch (budgetId) {
+      case 'ECONOMY': return 'Économique (Moins de 1000€ par personne)';
+      case 'MODERATE': return 'Modéré (1000€ - 2000€ par personne)';
+      case 'LUXURY': return 'Luxe (Plus de 2000€ par personne)';
+      default: return budgetId;
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0f8066" />
-        <Text style={styles.loadingText}>Enregistrement en cours...</Text>
-      </View>
-    );
-  }
+  const getBudgetIcon = (budgetId) => {
+    switch (budgetId) {
+      case 'ECONOMY': return 'wallet';
+      case 'MODERATE': return 'cash-multiple';
+      case 'LUXURY': return 'diamond-stone';
+      default: return 'wallet';
+    }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Famille {familyName}</Text>
-      <View style={styles.summaryItem}>
-        <Text style={styles.label}>Adultes :</Text>
-        <Text style={styles.value}>{adults}</Text>
-      </View>
-      <View style={styles.summaryItem}>
-        <Text style={styles.label}>Enfants :</Text>
-        <Text style={styles.value}>{children}</Text>
-      </View>
-      {children > 0 && (
-        <View style={styles.summaryItem}>
-          <Text style={styles.label}>Âges des enfants :</Text>
-          <Text style={styles.value}>{ages.length ? ages.join(", ") : "Non précisé"}</Text>
+    <SafeAreaView style={commonStyles.container}>
+      <View style={styles.headerContainer}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Récapitulatif</Text>
         </View>
-      )}
-      <View style={styles.summaryItem}>
-        <Text style={styles.label}>Type de voyage :</Text>
-        <Text style={styles.value}>{travelType}</Text>
-      </View>
-      <View style={styles.summaryItem}>
-        <Text style={styles.label}>Budget :</Text>
-        <Text style={styles.value}>{budget}</Text>
+        <Text style={styles.headerSubtitle}>Vérifiez les informations de votre famille</Text>
       </View>
 
-      {error && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
+      <ScrollView style={styles.contentContainer}>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="account-group" size={24} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Composition familiale</Text>
+          </View>
+          
+          <View style={styles.sectionContent}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nom de la famille</Text>
+              <Text style={styles.infoValue}>{familyName}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nombre d'adultes</Text>
+              <Text style={styles.infoValue}>{adults}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Nombre d'enfants</Text>
+              <Text style={styles.infoValue}>{children}</Text>
+            </View>
+            {children > 0 && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Âges des enfants</Text>
+                <Text style={styles.infoValue}>{childrenAges.join(', ')} ans</Text>
+              </View>
+            )}
+          </View>
         </View>
-      )}
 
-      <TouchableOpacity style={styles.validateButton} onPress={handleSubmit}>
-        <Text style={styles.validateButtonText}>Découvrir mon prochain voyage</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="airplane" size={24} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Préférences de voyage</Text>
+          </View>
+          
+          <View style={styles.sectionContent}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Types de voyages</Text>
+              <Text style={styles.infoValue}>{travel_preferences.join(', ')}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <View style={styles.budgetRow}>
+                <MaterialCommunityIcons 
+                  name={getBudgetIcon(budget)} 
+                  size={24} 
+                  color={colors.primary}
+                  style={styles.budgetIcon}
+                />
+                <Text style={styles.infoValue}>{getBudgetLabel(budget)}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={styles.buttonContainer}>
+        <OnboardingButton
+          title="Créer ma famille"
+          onPress={handleSubmit}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 20, justifyContent: "center", backgroundColor: "#fff" },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
-  loadingText: { marginTop: 10, fontSize: 16, color: "#666" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 30, textAlign: "center" },
-  summaryItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-    paddingVertical: 10,
+  headerContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.md,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: "#ececec",
+    borderBottomColor: colors.border,
   },
-  label: { fontSize: 18, color: "#555" },
-  value: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  errorContainer: {
-    backgroundColor: "#ffebee",
-    padding: 15,
-    borderRadius: 8,
-    marginVertical: 15,
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
   },
-  errorText: {
-    color: "#c62828",
-    fontSize: 14,
-    lineHeight: 20,
+  backButton: {
+    padding: spacing.sm,
+    marginRight: spacing.md,
+    marginLeft: -spacing.sm,
   },
-  validateButton: { backgroundColor: "#0f8066", paddingVertical: 15, borderRadius: 8, marginTop: 30, alignItems: "center" },
-  validateButtonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  headerTitle: {
+    ...typography.h1,
+    color: colors.text.primary,
+  },
+  headerSubtitle: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: spacing.lg,
+  },
+  section: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+    marginBottom: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    color: colors.text.primary,
+    marginLeft: spacing.md,
+  },
+  sectionContent: {
+    padding: spacing.lg,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  budgetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  budgetIcon: {
+    marginRight: spacing.sm,
+  },
+  infoLabel: {
+    ...typography.body,
+    color: colors.text.secondary,
+    flex: 1,
+  },
+  infoValue: {
+    ...typography.body,
+    color: colors.text.primary,
+    fontWeight: '600',
+    textAlign: 'right',
+  },
+  buttonContainer: {
+    padding: spacing.lg,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
 });

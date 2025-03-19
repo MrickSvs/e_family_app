@@ -1,110 +1,227 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, SafeAreaView, ScrollView } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors, typography, spacing, borderRadius, commonStyles } from '../../styles/onboardingStyles';
+import OnboardingButton from '../../components/OnboardingButton';
 
 const budgetOptions = [
-  { label: "Économique", price: "jusqu'à 1000€" },
-  { label: "Modéré", price: "1000€ - 3000€" },
-  { label: "Confort", price: "3000€ - 5000€" },
-  { label: "Luxe", price: "5000€ et plus" }
+  { 
+    id: 'ECONOMY', 
+    label: 'Économique', 
+    description: 'Moins de 1000€ par personne',
+    icon: 'wallet'
+  },
+  { 
+    id: 'MODERATE', 
+    label: 'Modéré', 
+    description: '1000€ - 2000€ par personne',
+    icon: 'cash-multiple'
+  },
+  { 
+    id: 'LUXURY', 
+    label: 'Luxe', 
+    description: 'Plus de 2000€ par personne',
+    icon: 'diamond-stone'
+  },
 ];
 
 export default function Step5Budget() {
   const navigation = useNavigation();
   const route = useRoute();
-  const [budget, setBudget] = useState("Modéré");
+  const [selectedBudget, setSelectedBudget] = useState(null);
 
   const handleNext = () => {
-    navigation.navigate("Step6Summary", { ...route.params, budget });
+    if (!selectedBudget) {
+      Alert.alert(
+        "Sélection requise",
+        "Veuillez sélectionner une fourchette de budget."
+      );
+      return;
+    }
+    navigation.navigate("Step6Summary", {
+      ...route.params,
+      budget: selectedBudget
+    });
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>💰 Quel est votre budget moyen ?</Text>
-      <Text style={styles.subtitle}>Sélectionnez une option qui correspond à votre budget par personne</Text>
-
-      <View style={styles.optionsContainer}>
-        {budgetOptions.map((option) => (
-          <TouchableOpacity
-            key={option.label}
-            style={[styles.optionButton, budget === option.label && styles.optionSelected]}
-            onPress={() => setBudget(option.label)}
+    <SafeAreaView style={commonStyles.container}>
+      <View style={styles.headerContainer}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
           >
-            <Text style={[styles.optionLabel, budget === option.label && styles.optionTextSelected]}>
-              {option.label}
-            </Text>
-            <Text style={[styles.optionPrice, budget === option.label && styles.optionTextSelected]}>
-              {option.price}
-            </Text>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text.primary} />
           </TouchableOpacity>
-        ))}
+          <Text style={styles.headerTitle}>Budget</Text>
+        </View>
+        <Text style={styles.headerSubtitle}>Quel est votre budget par personne ?</Text>
       </View>
+
+      <ScrollView style={styles.contentContainer}>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="wallet" size={24} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Fourchette de budget</Text>
+          </View>
+          
+          <View style={styles.optionsContainer}>
+            {budgetOptions.map((option) => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  styles.optionCard,
+                  selectedBudget === option.id && styles.optionCardSelected
+                ]}
+                onPress={() => setSelectedBudget(option.id)}
+              >
+                <View style={[
+                  styles.optionIconContainer,
+                  selectedBudget === option.id && styles.optionIconContainerSelected
+                ]}>
+                  <MaterialCommunityIcons
+                    name={option.icon}
+                    size={28}
+                    color={selectedBudget === option.id ? colors.text.light : colors.primary}
+                  />
+                </View>
+                <View style={styles.optionTextContainer}>
+                  <Text style={[
+                    styles.optionTitle,
+                    selectedBudget === option.id && styles.optionTitleSelected
+                  ]}>
+                    {option.label}
+                  </Text>
+                  <Text style={[
+                    styles.optionDescription,
+                    selectedBudget === option.id && styles.optionDescriptionSelected
+                  ]}>
+                    {option.description}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>Retour</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-          <Text style={styles.nextButtonText}>Continuer</Text>
-        </TouchableOpacity>
+        <OnboardingButton
+          title="Continuer"
+          onPress={handleNext}
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 22, fontWeight: "bold", marginVertical: 20 },
-  subtitle: { fontSize: 16, color: "#666", marginBottom: 20, textAlign: "center" },
-  optionsContainer: { width: "100%", marginVertical: 20 },
-  optionButton: { 
-    backgroundColor: "#ededed", 
-    marginVertical: 8, 
-    padding: 15, 
-    borderRadius: 8,
-    alignItems: "center"
+  headerContainer: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.md,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  optionSelected: { backgroundColor: "#0f8066" },
-  optionLabel: { 
-    fontSize: 18, 
-    fontWeight: "bold",
-    marginBottom: 4
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
   },
-  optionPrice: { 
-    fontSize: 14,
-    color: "#666"
-  },
-  optionTextSelected: { color: "#fff" },
-  
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "80%",
-    marginTop: 20,
-  },
-
   backButton: {
-    backgroundColor: "#0f8066",
-    paddingHorizontal: 25,
-    paddingVertical: 12,
-    borderRadius: 8,
-    flex: 1,
-    marginRight: 10,
-    alignItems: "center",
-    color: "#fff",
-    fontSize: 16,
-    textAlign: "center",
+    padding: spacing.sm,
+    marginRight: spacing.md,
+    marginLeft: -spacing.sm,
   },
-  backButtonText: { color: "#fff", fontSize: 16, textAlign: "center"}, 
-  
-  nextButton: {
-    backgroundColor: "#0f8066",
-    paddingHorizontal: 25,
-    paddingVertical: 12,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: "center", 
+  headerTitle: {
+    ...typography.h1,
+    color: colors.text.primary,
   },
-  nextButtonText: { color: "#fff", fontSize: 16, textAlign: "center"}
+  headerSubtitle: {
+    ...typography.body,
+    color: colors.text.secondary,
+    marginTop: spacing.xs,
+  },
+  contentContainer: {
+    flex: 1,
+    padding: spacing.lg,
+  },
+  section: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    color: colors.text.primary,
+    marginLeft: spacing.md,
+  },
+  optionsContainer: {
+    padding: spacing.lg,
+  },
+  optionCard: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  optionCardSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  optionIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  optionIconContainerSelected: {
+    backgroundColor: 'transparent',
+  },
+  optionTextContainer: {
+    flex: 1,
+  },
+  optionTitle: {
+    ...typography.h3,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  optionTitleSelected: {
+    color: colors.text.light,
+  },
+  optionDescription: {
+    ...typography.caption,
+    color: colors.text.secondary,
+  },
+  optionDescriptionSelected: {
+    color: colors.text.light,
+  },
+  buttonContainer: {
+    padding: spacing.lg,
+    backgroundColor: colors.background,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
 });
