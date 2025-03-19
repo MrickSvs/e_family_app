@@ -1,19 +1,67 @@
 import React, { useState, useEffect } from "react";
 import { SafeAreaView, View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Modal, TextInput, Image, ActivityIndicator, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getProfile, updateFamilyProfile, updateMemberProfile, addFamilyMember, deleteFamilyMember } from '../services/profileService';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Chip } from '../components/Chip';
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editMode, setEditMode] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [showEditMemberModal, setShowEditMemberModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getProfile();
+      setProfile(data);
+    } catch (err) {
+      setError('Impossible de charger le profil');
+      Alert.alert(
+        'Erreur',
+        'Impossible de charger le profil. Veuillez réessayer plus tard.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0f8066" />
+          <Text style={styles.loadingText}>Chargement du profil...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadProfile}>
+            <Text style={styles.retryButtonText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleFamilyNameUpdate = async (newName) => {
     try {
@@ -33,7 +81,23 @@ export default function ProfileScreen() {
 
   const handleMemberUpdate = async (memberId, data) => {
     try {
-      const updatedMember = await updateMemberProfile(memberId, data);
+      // Ensure last_name is included in the update
+      const updateData = {
+        ...data,
+        last_name: data.last_name || '', // Provide a default empty string if last_name is not provided
+        role: editingMember.role // Include the existing role in the update
+      };
+
+      // Filter the fields to only include allowed ones
+      const allowedFields = ['first_name', 'last_name', 'birth_date', 'role'];
+      const filteredData = Object.keys(updateData)
+        .filter(key => allowedFields.includes(key))
+        .reduce((obj, key) => {
+          obj[key] = updateData[key];
+          return obj;
+        }, {});
+
+      const updatedMember = await updateMemberProfile(memberId, filteredData);
       setProfile(prev => ({
         ...prev,
         members: prev.members.map(m => m.id === memberId ? updatedMember : m)
@@ -41,7 +105,19 @@ export default function ProfileScreen() {
       setShowEditMemberModal(false);
       setEditingMember(null);
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de mettre à jour le membre');
+      console.error("❌ Erreur lors de la mise à jour du membre:", error);
+      let errorMessage = "Impossible de mettre à jour le membre";
+      
+      try {
+        const parsedError = JSON.parse(error.message);
+        if (parsedError.errors) {
+          errorMessage = parsedError.errors.map(err => `${err.field}: ${err.message}`).join('\n');
+        }
+      } catch (e) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Erreur', errorMessage);
     }
   };
 
@@ -57,104 +133,73 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      {/* En-tête similaire à FamilyTripsScreen */}
       <View style={styles.topContainer}>
         <Text style={styles.mainTitle}>Mon Profil</Text>
-        <Text style={styles.subtitle}>Gérer mes informations familiales</Text>
+        <Text style={styles.subtitle}>
+          Famille {profile?.family_name} • {profile?.members?.filter(m => m.role === 'Adulte').length} adulte{profile?.members?.filter(m => m.role === 'Adulte').length > 1 ? "s" : ""}, {profile?.members?.filter(m => m.role === 'Enfant').length} enfant{profile?.members?.filter(m => m.role === 'Enfant').length > 1 ? "s" : ""}
+        </Text>
       </View>
 
-      {/* Contenu principal */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.profileSection}>
-          <Text style={styles.profileTitle}>Profil famille</Text>
-          <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={() => navigation.navigate("FamilyProfile")}
-          >
-            <Text style={styles.ctaButtonText}>Compléter mon profil</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      {/* Section des membres avec champs supplémentaires */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>
-            Membres de la famille
-            <Text style={styles.memberCount}>
-              {" "}({profile?.members?.length || 0})
-            </Text>
+          <Text style={styles.profileTitle}>
+            {profile?.family_name || 'Profil famille'}
           </Text>
-          {editMode && (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => setShowAddMemberModal(true)}
-            >
-              <MaterialIcons name="person-add" size={24} color="#0066FF" />
-            </TouchableOpacity>
-          )}
         </View>
 
-        {profile?.members.map((member) => (
-          <Animated.View 
-            key={member.id} 
-            style={[
-              styles.memberCard,
-              {
-                transform: [{
-                  scale: selectedMember?.id === member.id ? 1.02 : 1
-                }]
-              }
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.memberHeader}
-              onPress={() => toggleMemberDetails(member.id)}
-            >
-              <View style={styles.memberInfo}>
-                <View style={styles.memberNameContainer}>
-                  {editMode ? (
-                    <TouchableOpacity
-                      onPress={() => handleMemberEdit(member)}
-                      style={styles.memberEditButton}
-                    >
-                      <Text style={styles.memberName}>
-                        {member.first_name} {member.last_name}
-                      </Text>
-                      <MaterialIcons name="edit" size={16} color="#0066FF" />
-                    </TouchableOpacity>
-                  ) : (
+        {profile?.members && profile.members.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                Membres de la famille
+                <Text style={styles.memberCount}>
+                  {" "}({profile.members.length})
+                </Text>
+              </Text>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => setEditMode(!editMode)}
+              >
+                <MaterialIcons 
+                  name={editMode ? "done" : "edit"} 
+                  size={24} 
+                  color="#0f8066" 
+                />
+              </TouchableOpacity>
+            </View>
+
+            {profile.members.map((member) => (
+              <View key={member.id} style={styles.memberCard}>
+                <View style={styles.memberHeader}>
+                  <View style={styles.memberInfo}>
                     <Text style={styles.memberName}>
                       {member.first_name} {member.last_name}
                     </Text>
+                    <View style={styles.memberDetails}>
+                      <Text style={styles.memberRole}>{member.role}</Text>
+                      {member.birth_date && (
+                        <Text style={styles.memberBirthDate}>
+                          • {new Date(member.birth_date).toLocaleDateString()}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  {editMode && (
+                    <View style={styles.memberActions}>
+                      <TouchableOpacity
+                        style={styles.editMemberButton}
+                        onPress={() => handleMemberEdit(member)}
+                      >
+                        <MaterialIcons name="edit" size={20} color="#0f8066" />
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
-                <Text style={styles.memberRole}>{member.role}</Text>
-                {member.birth_date && (
-                  <Text style={styles.memberBirthDate}>
-                    {new Date(member.birth_date).toLocaleDateString()}
-                  </Text>
-                )}
               </View>
-              <View style={styles.memberActions}>
-                {editMode && (
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDeleteMember(member.id)}
-                  >
-                    <MaterialIcons name="delete" size={20} color="#FF3B30" />
-                  </TouchableOpacity>
-                )}
-                <MaterialIcons
-                  name={selectedMember?.id === member.id ? 'expand-less' : 'expand-more'}
-                  size={24}
-                  color="#666"
-                />
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-        ))}
-      </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
       {/* Modal d'édition de membre */}
       <Modal
@@ -181,14 +226,6 @@ export default function ProfileScreen() {
               value={editingMember?.last_name}
               onChangeText={(text) => setEditingMember(prev => ({ ...prev, last_name: text }))}
               placeholder="Nom"
-            />
-
-            <Text style={styles.inputLabel}>Rôle</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={editingMember?.role}
-              onChangeText={(text) => setEditingMember(prev => ({ ...prev, role: text }))}
-              placeholder="Ex: Parent, Enfant..."
             />
 
             <Text style={styles.inputLabel}>Date de naissance</Text>
@@ -246,7 +283,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  /* Partie haute similaire à FamilyTripsScreen */
   topContainer: {
     backgroundColor: "#F7F5ED",
     paddingHorizontal: 16,
@@ -265,37 +301,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
   },
-
-  /* Contenu déroulant */
   scrollContainer: {
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
-
-  /* Section Profil */
   profileSection: {
     marginTop: 20,
     alignItems: "center",
   },
   profileTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: "bold",
     marginBottom: 16,
     color: "#333",
   },
-  ctaButton: {
-    backgroundColor: "#0f8066",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  ctaButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-
-  /* Section des membres */
   section: {
     marginTop: 20,
   },
@@ -314,7 +333,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  addButton: {
+  editButton: {
     padding: 8,
   },
   memberCard: {
@@ -329,32 +348,34 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   memberInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  memberNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
   },
   memberName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginRight: 8,
+    marginBottom: 4,
+  },
+  memberDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   memberRole: {
     fontSize: 14,
     color: '#666',
   },
+  memberBirthDate: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+  },
   memberActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  deleteButton: {
+  editMemberButton: {
     padding: 8,
   },
-
-  /* Modal d'édition de membre */
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -379,6 +400,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
+    alignSelf: 'flex-start',
   },
   modalInput: {
     width: '100%',
@@ -393,6 +415,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
   },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
   cancelButton: {
     backgroundColor: '#FF3B30',
   },
@@ -402,7 +431,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   saveButton: {
-    backgroundColor: '#0066FF',
+    backgroundColor: '#0f8066',
   },
   saveButtonText: {
     color: '#fff',
@@ -410,6 +439,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   datePickerButton: {
+    width: '100%',
     backgroundColor: '#F5F5F5',
     padding: 12,
     borderRadius: 8,
@@ -418,5 +448,38 @@ const styles = StyleSheet.create({
   datePickerButtonText: {
     fontSize: 16,
     color: '#333',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#0f8066',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

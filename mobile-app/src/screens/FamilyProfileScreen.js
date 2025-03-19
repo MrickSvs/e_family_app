@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,26 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons'; // Ou la lib d'icônes que tu utilises
+import { Ionicons } from '@expo/vector-icons';
+import { getProfile, updateFamilyProfile, addFamilyMember } from '../services/profileService';
+import { Chip } from '../components/Chip';
+
+const TRAVEL_TYPES = ['Découverte', 'Aventure', 'Détente', 'Culture'];
+const BUDGET_RANGES = ['Économique', 'Modéré', 'Confort', 'Luxe'];
+const ACTIVITIES = ['Sport', 'Culture', 'Nature', 'Gastronomie', 'Shopping', 'Histoire'];
 
 export default function FamilyProfileScreen() {
   const navigation = useNavigation();
-
-  // Étapes du formulaire (1 à 4)
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const [profile, setProfile] = useState(null);
 
   // States pour stocker les infos du formulaire
   const [familyName, setFamilyName] = useState('');
@@ -29,102 +40,248 @@ export default function FamilyProfileScreen() {
 
   const [allergies, setAllergies] = useState('');
   const [constraints, setConstraints] = useState('');
-  const [dreamDestinations, setDreamDestinations] = useState('');
+  const [selectedActivities, setSelectedActivities] = useState([]);
 
-  // Calcul de la progression pour la barre (en pourcentage)
-  const progress = (currentStep / 4) * 100;
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
-  // Fonctions de navigation entre étapes
-  const goNext = () => setCurrentStep((prev) => Math.min(prev + 1, 4));
-  const goBack = () => {
-    // Si on est à la 1ère étape, on ferme la page ; sinon on recule d’une étape
-    if (currentStep === 1) {
-      navigation.goBack();
-    } else {
-      setCurrentStep((prev) => Math.max(prev - 1, 1));
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getProfile();
+      setProfile(data);
+      // Pré-remplir les champs si le profil existe
+      if (data) {
+        setFamilyName(data.family_name || '');
+        setTravelType(data.travel_type || '');
+        setBudget(data.budget || '');
+        setSelectedActivities(data.interests || []);
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors du chargement du profil:", error);
+      let errorMessage = "Impossible de charger le profil";
+      
+      // Vérifier si c'est une erreur de validation
+      try {
+        const parsedError = JSON.parse(error.message);
+        if (parsedError.errors) {
+          errorMessage = parsedError.errors.map(err => `${err.field}: ${err.message}`).join('\n');
+        }
+      } catch (e) {
+        // Si ce n'est pas une erreur JSON, on garde le message d'origine
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Action finale (étape 4 -> Terminer)
-  const handleFinish = () => {
-    // Ici tu peux stocker / envoyer ces infos (AsyncStorage, Redux, API…)
-    console.log('Profil familial complété :', {
-      familyName,
-      adults,
-      children,
-      ages,
-      travelType,
-      budget,
-      frequency,
-      allergies,
-      constraints,
-      dreamDestinations,
-    });
-
-    // Retourne au screen précédent (Profil) ou là où tu veux
-    navigation.goBack();
+  const validateStep = (step) => {
+    switch (step) {
+      case 1:
+        if (!familyName.trim()) {
+          setError("Le nom de famille est requis");
+          return false;
+        }
+        if (!adults || parseInt(adults) < 1) {
+          setError("Au moins un adulte est requis");
+          return false;
+        }
+        break;
+      case 2:
+        if (!travelType) {
+          setError("Le type de voyage est requis");
+          return false;
+        }
+        if (!budget) {
+          setError("Le budget est requis");
+          return false;
+        }
+        break;
+      case 3:
+        // Pas de validation obligatoire pour les contraintes
+        break;
+      case 4:
+        if (selectedActivities.length === 0) {
+          setError("Sélectionnez au moins une activité");
+          return false;
+        }
+        break;
+    }
+    setError(null);
+    return true;
   };
 
-  // --- Rendu de chaque étape ---
-  const renderStep1 = () => (
-    <>
-      <Text style={styles.stepTitle}>Informations Générales</Text>
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
 
-      <Text style={styles.label}>Nom de la famille 🏡</Text>
+  const handlePrevious = () => {
+    setCurrentStep(prev => prev - 1);
+  };
+
+  // Action finale (étape 4 -> Terminer)
+  const handleFinish = async () => {
+    if (!validateStep(currentStep)) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Mettre à jour le profil familial
+      await updateFamilyProfile({
+        family_name: familyName,
+        interests: selectedActivities,
+        travel_preferences: {
+          travel_type: travelType,
+          budget: budget,
+          frequency: frequency
+        }
+      });
+
+      // Ajouter les membres de la famille
+      const numAdults = parseInt(adults);
+      const numChildren = parseInt(children);
+      const childrenAges = ages.split(',').map(age => parseInt(age.trim()));
+
+      // Ajouter les adultes
+      for (let i = 0; i < numAdults; i++) {
+        await addFamilyMember({
+          first_name: `Adulte ${i + 1}`,
+          role: 'Adulte',
+          dietary_restrictions: allergies
+        });
+      }
+
+      // Ajouter les enfants
+      for (let i = 0; i < numChildren; i++) {
+        await addFamilyMember({
+          first_name: `Enfant ${i + 1}`,
+          role: 'Enfant',
+          birth_date: new Date().toISOString().split('T')[0], // À mettre à jour avec l'âge réel
+          dietary_restrictions: allergies
+        });
+      }
+
+      Alert.alert('Succès', 'Votre profil familial a été mis à jour avec succès !');
+      navigation.goBack();
+    } catch (error) {
+      console.error("❌ Erreur lors de la sauvegarde:", error);
+      let errorMessage = "Impossible de sauvegarder le profil";
+      
+      // Vérifier si c'est une erreur de validation
+      try {
+        const parsedError = JSON.parse(error.message);
+        if (parsedError.errors) {
+          errorMessage = parsedError.errors.map(err => `${err.field}: ${err.message}`).join('\n');
+        }
+      } catch (e) {
+        // Si ce n'est pas une erreur JSON, on garde le message d'origine
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleActivity = (activity) => {
+    setSelectedActivities(prev => 
+      prev.includes(activity) 
+        ? prev.filter(a => a !== activity)
+        : [...prev, activity]
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0f8066" />
+        <Text style={styles.loadingText}>Chargement...</Text>
+      </View>
+    );
+  }
+
+  const renderStep1 = () => (
+    <ScrollView style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Informations de base</Text>
+
+      <Text style={styles.label}>Nom de la famille 👨‍👩‍👧‍👦</Text>
       <TextInput
         style={styles.input}
-        placeholder="Ex : Famille Martin"
+        placeholder="Ex : Les Martin"
         value={familyName}
         onChangeText={setFamilyName}
       />
 
-      <Text style={styles.label}>Nombre d'adultes 🧑</Text>
+      <Text style={styles.label}>Nombre d'adultes 👤</Text>
       <TextInput
         style={styles.input}
         placeholder="Ex : 2"
-        keyboardType="numeric"
         value={adults}
         onChangeText={setAdults}
+        keyboardType="numeric"
       />
 
-      <Text style={styles.label}>Nombre d'enfants 🧒</Text>
+      <Text style={styles.label}>Nombre d'enfants 👶</Text>
       <TextInput
         style={styles.input}
-        placeholder="Ex : 1"
-        keyboardType="numeric"
+        placeholder="Ex : 2"
         value={children}
         onChangeText={setChildren}
+        keyboardType="numeric"
       />
 
-      <Text style={styles.label}>Âges des enfants 📅</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex : 3, 7"
-        value={ages}
-        onChangeText={setAges}
-      />
-    </>
+      {parseInt(children) > 0 && (
+        <>
+          <Text style={styles.label}>Âges des enfants 🎂</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex : 5, 8, 12"
+            value={ages}
+            onChangeText={setAges}
+          />
+        </>
+      )}
+    </ScrollView>
   );
 
   const renderStep2 = () => (
-    <>
+    <ScrollView style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Préférences de Voyage</Text>
 
       <Text style={styles.label}>Type de voyage préféré 🌍</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex : Nature, Culture, Plage..."
-        value={travelType}
-        onChangeText={setTravelType}
-      />
+      <View style={styles.chipContainer}>
+        {TRAVEL_TYPES.map(type => (
+          <Chip
+            key={type}
+            label={type}
+            selected={travelType === type}
+            onPress={() => setTravelType(type)}
+          />
+        ))}
+      </View>
 
       <Text style={styles.label}>Budget moyen 💰</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex : 1000-3000€"
-        value={budget}
-        onChangeText={setBudget}
-      />
+      <View style={styles.chipContainer}>
+        {BUDGET_RANGES.map(range => (
+          <Chip
+            key={range}
+            label={range}
+            selected={budget === range}
+            onPress={() => setBudget(range)}
+          />
+        ))}
+      </View>
 
       <Text style={styles.label}>Fréquence des voyages 🗓️</Text>
       <TextInput
@@ -133,11 +290,11 @@ export default function FamilyProfileScreen() {
         value={frequency}
         onChangeText={setFrequency}
       />
-    </>
+    </ScrollView>
   );
 
   const renderStep3 = () => (
-    <>
+    <ScrollView style={styles.stepContainer}>
       <Text style={styles.stepTitle}>Contraintes & Besoins Spécifiques</Text>
 
       <Text style={styles.label}>Allergies ou régimes alimentaires ? 🥦🚫</Text>
@@ -155,157 +312,175 @@ export default function FamilyProfileScreen() {
         value={constraints}
         onChangeText={setConstraints}
       />
-    </>
+    </ScrollView>
   );
 
   const renderStep4 = () => (
-    <>
-      <Text style={styles.stepTitle}>Destinations de Rêve</Text>
+    <ScrollView style={styles.stepContainer}>
+      <Text style={styles.stepTitle}>Activités préférées</Text>
 
-      <Text style={styles.label}>Quelles envies / destinations ? 🌅</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ex : Japon, Canada…"
-        value={dreamDestinations}
-        onChangeText={setDreamDestinations}
-      />
-
-      <View style={styles.finishContainer}>
-        <Text style={styles.finishText}>
-          Vous y êtes presque ! Validez pour enregistrer votre profil familial.
-        </Text>
+      <View style={styles.chipContainer}>
+        {ACTIVITIES.map(activity => (
+          <Chip
+            key={activity}
+            label={activity}
+            selected={selectedActivities.includes(activity)}
+            onPress={() => toggleActivity(activity)}
+          />
+        ))}
       </View>
-    </>
+    </ScrollView>
   );
 
   return (
-    <KeyboardAvoidingView
-      style={styles.safeContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Header : icône retour + barre de progression */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goBack} style={styles.backButton}>
-          <Ionicons
-            name={currentStep === 1 ? 'close' : 'chevron-back'}
-            size={24}
-            color="#333"
-          />
-        </TouchableOpacity>
-        
-        <View style={styles.progressBarContainer}>
-          <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+      <View style={styles.progressContainer}>
+        <View style={styles.progressBar}>
+          <View style={[styles.progress, { width: `${(currentStep / 4) * 100}%` }]} />
         </View>
-        
-        {/* Petit espace vide pour équilibrer */}
-        <View style={{ width: 24 }} />
+        <Text style={styles.progressText}>Étape {currentStep}/4</Text>
       </View>
 
-      {/* Contenu de l’étape courante */}
-      <View style={styles.container}>
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-        {currentStep === 4 && renderStep4()}
-      </View>
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
 
-      {/* Footer : bouton "Suivant" ou "Terminer" */}
-      <View style={styles.footer}>
-        {currentStep < 4 ? (
-          <TouchableOpacity style={styles.button} onPress={goNext}>
-            <Text style={styles.buttonText}>Suivant</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.button} onPress={handleFinish}>
-            <Text style={styles.buttonText}>Terminer</Text>
+      {currentStep === 1 && renderStep1()}
+      {currentStep === 2 && renderStep2()}
+      {currentStep === 3 && renderStep3()}
+      {currentStep === 4 && renderStep4()}
+
+      <View style={styles.buttonContainer}>
+        {currentStep > 1 && (
+          <TouchableOpacity 
+            style={[styles.button, styles.previousButton]} 
+            onPress={handlePrevious}
+          >
+            <Text style={styles.buttonText}>Précédent</Text>
           </TouchableOpacity>
         )}
+        
+        <TouchableOpacity 
+          style={[styles.button, styles.nextButton]} 
+          onPress={currentStep === 4 ? handleFinish : handleNext}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>
+              {currentStep === 4 ? 'Terminer' : 'Suivant'}
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: '#F7F5ED',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: '#F7F5ED',
-  },
-  backButton: {
-    paddingRight: 8,
-  },
-  progressBarContainer: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: 8,
-    backgroundColor: '#0f8066',
-  },
-
   container: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  stepTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#555',
-    marginBottom: 6,
-  },
-  input: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 16,
-    fontSize: 14,
   },
-
-  finishContainer: {
-    marginTop: 20,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#fff',
   },
-  finishText: {
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  progressContainer: {
+    padding: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 2,
+  },
+  progress: {
+    height: '100%',
+    backgroundColor: '#0f8066',
+    borderRadius: 2,
+  },
+  progressText: {
+    marginTop: 8,
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
+  },
+  stepContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  stepTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    color: '#666',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 20,
+    fontSize: 16,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  errorContainer: {
+    backgroundColor: '#ffebee',
+    padding: 15,
+    margin: 20,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: '#c62828',
+    fontSize: 14,
     lineHeight: 20,
   },
-
-  footer: {
+  buttonContainer: {
+    flexDirection: 'row',
     padding: 20,
-    backgroundColor: '#F7F5ED',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
   },
   button: {
-    backgroundColor: '#0f8066',
-    borderRadius: 8,
+    flex: 1,
     paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
+  },
+  previousButton: {
+    backgroundColor: '#f5f5f5',
+    marginRight: 10,
+  },
+  nextButton: {
+    backgroundColor: '#0f8066',
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: '600',
   },
 });

@@ -1,14 +1,19 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
-const Chip = ({ label, selected, onPress }) => {
+export const Chip = ({ label, selected, onPress }) => {
   return (
     <TouchableOpacity
-      style={[styles.chip, selected && styles.selectedChip]}
+      style={[
+        styles.chip,
+        selected && styles.selectedChip
+      ]}
       onPress={onPress}
-      activeOpacity={0.7}
     >
-      <Text style={[styles.label, selected && styles.selectedLabel]}>
+      <Text style={[
+        styles.label,
+        selected && styles.selectedLabel
+      ]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -17,26 +22,23 @@ const Chip = ({ label, selected, onPress }) => {
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-    marginRight: 8,
-    marginBottom: 8,
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#ddd',
   },
   selectedChip: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#0f8066',
+    borderColor: '#0f8066',
   },
   label: {
     fontSize: 14,
-    color: '#333333',
+    color: '#666',
   },
   selectedLabel: {
-    color: '#FFFFFF',
+    color: '#fff',
+    fontWeight: '600',
   },
-});
-
-export default Chip; 
+}); 

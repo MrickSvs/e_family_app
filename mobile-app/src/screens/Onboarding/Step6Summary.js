@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { saveOnboardingData } from "../../services/onboardingService";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +16,9 @@ function generateUUID() {
 export default function Step6Summary() {
   const route = useRoute();
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
   const {
     familyName = "Famille",
     adults = 1,
@@ -27,6 +30,9 @@ export default function Step6Summary() {
 
   const handleSubmit = async () => {
     try {
+      setLoading(true);
+      setError(null);
+
       // Générer un UUID valide
       const deviceId = generateUUID();
       await AsyncStorage.setItem('deviceId', deviceId);
@@ -36,9 +42,10 @@ export default function Step6Summary() {
         family_name: familyName,
         members: [
           ...Array(adults).fill().map((_, i) => ({
-            first_name: `Adulte ${i + 1}`,
+            first_name: "Prénom",
             last_name: familyName,
-            role: "Adulte"
+            role: "Adulte",
+            birth_date: "2000-01-01"
           })),
           ...Array(children).fill().map((_, i) => ({
             first_name: `Enfant ${i + 1}`,
@@ -67,13 +74,30 @@ export default function Step6Summary() {
           routes: [{ name: "Main", params: { screen: "FamilyTripsScreen" } }],
         });
       } else {
-        Alert.alert("Erreur", response.message);
+        // Afficher les erreurs de validation s'il y en a
+        if (response.errors) {
+          const errorMessages = response.errors.map(error => `${error.field}: ${error.message}`).join('\n');
+          setError(`Erreurs de validation:\n${errorMessages}`);
+        } else {
+          setError(response.message);
+        }
       }
     } catch (error) {
       console.error("Erreur lors de l'onboarding:", error);
-      Alert.alert("Erreur", "Une erreur est survenue lors de l'enregistrement des données.");
+      setError("Une erreur est survenue lors de l'enregistrement des données.");
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0f8066" />
+        <Text style={styles.loadingText}>Enregistrement en cours...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -101,6 +125,12 @@ export default function Step6Summary() {
         <Text style={styles.value}>{budget}</Text>
       </View>
 
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       <TouchableOpacity style={styles.validateButton} onPress={handleSubmit}>
         <Text style={styles.validateButtonText}>Découvrir mon prochain voyage</Text>
       </TouchableOpacity>
@@ -110,6 +140,8 @@ export default function Step6Summary() {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: 20, justifyContent: "center", backgroundColor: "#fff" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
+  loadingText: { marginTop: 10, fontSize: 16, color: "#666" },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 30, textAlign: "center" },
   summaryItem: {
     flexDirection: "row",
@@ -121,6 +153,17 @@ const styles = StyleSheet.create({
   },
   label: { fontSize: 18, color: "#555" },
   value: { fontSize: 18, fontWeight: "bold", color: "#333" },
+  errorContainer: {
+    backgroundColor: "#ffebee",
+    padding: 15,
+    borderRadius: 8,
+    marginVertical: 15,
+  },
+  errorText: {
+    color: "#c62828",
+    fontSize: 14,
+    lineHeight: 20,
+  },
   validateButton: { backgroundColor: "#0f8066", paddingVertical: 15, borderRadius: 8, marginTop: 30, alignItems: "center" },
   validateButtonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
 });

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import AgencyBlock from "../components/AgencyBlock";
 
 export default function PastTripDetailScreen() {
   const route = useRoute();
@@ -85,6 +86,20 @@ export default function PastTripDetailScreen() {
               </ScrollView>
             </View>
           )}
+
+          <AgencyBlock 
+            agency={{
+              name: "L'agence de Virginie",
+              imageUrl: "https://static1.evcdn.net/images/reduction/1649071_w-768_h-1024_q-70_m-crop.jpg",
+              rating: 4.5,
+              reviewCount: 75,
+              tags: ["Famille avec enfants", "Incontournables"],
+              memberSince: "1 an",
+              experience: "3 ans",
+              languages: ["Espagnol", "Français"],
+              location: "Espagne"
+            }}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import AgencyBlock from "../components/AgencyBlock";
 
 const { width } = Dimensions.get("window");
 
@@ -19,25 +20,6 @@ export default function TripDetailScreen() {
   const navigation = useNavigation();
   const { trip, isPast } = route.params;
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="arrow-back" size={24} color="#333" />
-        <Text style={styles.backButtonText}>Retour</Text>
-      </TouchableOpacity>
-      <View style={styles.headerContent}>
-        <Text style={styles.title}>{trip.title}</Text>
-        <View style={styles.mainInfo}>
-          <Text style={styles.duration}>{trip.duration}</Text>
-          <Text style={styles.type}>{trip.type}</Text>
-        </View>
-      </View>
-    </View>
-  );
 
   const renderUpcomingTripDetails = () => (
     <>
@@ -118,6 +100,20 @@ export default function TripDetailScreen() {
           </View>
         </View>
       )}
+
+      <AgencyBlock 
+        agency={{
+          name: "L'agence de Virginie",
+          imageUrl: "https://static1.evcdn.net/images/reduction/1649071_w-768_h-1024_q-70_m-crop.jpg",
+          rating: 4.5,
+          reviewCount: 75,
+          tags: ["Famille avec enfants", "Incontournables"],
+          memberSince: "1 an",
+          experience: "3 ans",
+          languages: ["Espagnol", "Français"],
+          location: "Espagne"
+        }}
+      />
     </>
   );
 
@@ -183,9 +179,25 @@ export default function TripDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer}>
-      <ScrollView>
+      <ScrollView stickyHeaderIndices={[0]}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+
         <Image source={{ uri: trip.imageUrl }} style={styles.coverImage} />
-        {renderHeader()}
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>{trip.title}</Text>
+          <View style={styles.mainInfo}>
+            <Text style={styles.duration}>{trip.duration}</Text>
+            <Text style={styles.type}>{trip.type}</Text>
+          </View>
+        </View>
         {isPast ? renderPastTripDetails() : renderUpcomingTripDetails()}
       </ScrollView>
 
@@ -205,29 +217,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
   },
-  coverImage: {
-    width: "100%",
-    height: 250,
-  },
   header: {
-    backgroundColor: "#fff",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: '#eee',
   },
   backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButtonText: {
     marginLeft: 8,
     fontSize: 16,
-    color: "#333",
+    color: '#333',
   },
-  headerContent: {
-    marginTop: 4,
+  coverImage: {
+    width: "100%",
+    height: 250,
+  },
+  contentContainer: {
+    padding: 16,
   },
   title: {
     fontSize: 24,
