@@ -35,7 +35,7 @@ export default function Step6Summary() {
 
       // Générer un UUID valide
       const deviceId = generateUUID();
-      await AsyncStorage.setItem('deviceId', deviceId);
+      await AsyncStorage.setItem('device_id', deviceId);
 
       const familyData = {
         device_id: deviceId,

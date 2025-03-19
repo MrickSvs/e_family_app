@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const onboardingRoutes = require('./routes/onboarding');
 const familyRoutes = require('./routes/familyRoutes');
+const tripRoutes = require('./routes/trips');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ app.use(bodyParser.json());
 // Routes
 app.use('/api', onboardingRoutes);
 app.use('/api/families', familyRoutes);
+app.use('/api', tripRoutes);
 
 // Démarrer le serveur
 app.listen(PORT, () => {

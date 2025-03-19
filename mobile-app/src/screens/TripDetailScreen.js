@@ -8,10 +8,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AgencyBlock from "../components/AgencyBlock";
+import CreateTripModal from "../components/CreateTripModal";
+import { getProfile } from "../services/profileService";
 
 const { width } = Dimensions.get("window");
 
@@ -20,6 +23,28 @@ export default function TripDetailScreen() {
   const navigation = useNavigation();
   const { trip, isPast } = route.params;
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showCreateTripModal, setShowCreateTripModal] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Charger les membres de la famille
+  const loadFamilyMembers = async () => {
+    try {
+      setLoading(true);
+      const profile = await getProfile();
+      setFamilyMembers(profile.members || []);
+    } catch (error) {
+      console.error("Erreur lors du chargement des membres:", error);
+      Alert.alert('Erreur', 'Impossible de charger les membres de la famille');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateTrip = () => {
+    loadFamilyMembers();
+    setShowCreateTripModal(true);
+  };
 
   const renderUpcomingTripDetails = () => (
     <>
@@ -203,11 +228,24 @@ export default function TripDetailScreen() {
 
       {!isPast && (
         <View style={styles.bottomContainer}>
-          <TouchableOpacity style={styles.bookButton}>
-            <Text style={styles.bookButtonText}>Réserver ce voyage</Text>
+          <TouchableOpacity 
+            style={styles.bookButton}
+            onPress={handleCreateTrip}
+            disabled={loading}
+          >
+            <Text style={styles.bookButtonText}>
+              {loading ? 'Chargement...' : 'Créer un voyage'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
+
+      <CreateTripModal
+        visible={showCreateTripModal}
+        onClose={() => setShowCreateTripModal(false)}
+        itinerary={trip}
+        familyMembers={familyMembers}
+      />
     </SafeAreaView>
   );
 }
