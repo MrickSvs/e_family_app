@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Platform, SafeAreaView, ScrollView, Alert } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, SafeAreaView, Alert } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, commonStyles } from '../../styles/onboardingStyles';
@@ -9,13 +9,27 @@ export default function Step6Summary() {
   const navigation = useNavigation();
   const route = useRoute();
   const { familyName, adults, children, childrenAges, travel_preferences, budget } = route.params;
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = () => {
-    // TODO: Envoyer les données au backend
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Main' }],
-    });
+  const handleSubmit = async () => {
+    try {
+      setIsLoading(true);
+      // Simulation d'un délai pour montrer le loading state
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Main' }],
+      });
+    } catch (error) {
+      Alert.alert(
+        "Erreur",
+        "Une erreur est survenue lors de la création de votre famille. Veuillez réessayer.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getBudgetLabel = (budgetId) => {
@@ -51,65 +65,86 @@ export default function Step6Summary() {
         <Text style={styles.headerSubtitle}>Vérifiez les informations de votre famille</Text>
       </View>
 
-      <ScrollView style={styles.contentContainer}>
+      <View style={styles.contentContainer}>
+        {/* Famille */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
             <MaterialCommunityIcons name="account-group" size={24} color={colors.primary} />
             <Text style={styles.sectionTitle}>Composition familiale</Text>
           </View>
           
-          <View style={styles.sectionContent}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Nom de la famille</Text>
-              <Text style={styles.infoValue}>{familyName}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Nombre d'adultes</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Nom</Text>
+            <Text style={styles.infoValue}>{familyName}</Text>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Adultes</Text>
+            <View style={styles.countContainer}>
+              <MaterialCommunityIcons name="account" size={20} color={colors.primary} />
               <Text style={styles.infoValue}>{adults}</Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Nombre d'enfants</Text>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Enfants</Text>
+            <View style={styles.countContainer}>
+              <MaterialCommunityIcons name="account-child" size={20} color={colors.primary} />
               <Text style={styles.infoValue}>{children}</Text>
             </View>
-            {children > 0 && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Âges des enfants</Text>
-                <Text style={styles.infoValue}>{childrenAges.join(', ')} ans</Text>
-              </View>
-            )}
           </View>
+          
+          {children > 0 && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Âges</Text>
+              <View style={styles.agesContainer}>
+                {childrenAges.map((age, index) => (
+                  <Text key={index} style={styles.ageText}>
+                    {index > 0 ? ' • ' : ''}{age} ans
+                  </Text>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
 
+        {/* Préférences */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
             <MaterialCommunityIcons name="airplane" size={24} color={colors.primary} />
             <Text style={styles.sectionTitle}>Préférences de voyage</Text>
           </View>
           
-          <View style={styles.sectionContent}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Types de voyages</Text>
-              <Text style={styles.infoValue}>{travel_preferences.join(', ')}</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Types</Text>
+            <View style={styles.preferencesContainer}>
+              {travel_preferences.map((pref, index) => (
+                <Text key={index} style={styles.preferenceText}>
+                  {index > 0 ? ' • ' : ''}{pref}
+                </Text>
+              ))}
             </View>
-            <View style={styles.infoRow}>
-              <View style={styles.budgetRow}>
-                <MaterialCommunityIcons 
-                  name={getBudgetIcon(budget)} 
-                  size={24} 
-                  color={colors.primary}
-                  style={styles.budgetIcon}
-                />
-                <Text style={styles.infoValue}>{getBudgetLabel(budget)}</Text>
-              </View>
+          </View>
+          
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Budget</Text>
+            <View style={styles.budgetContainer}>
+              <MaterialCommunityIcons 
+                name={getBudgetIcon(budget)} 
+                size={20} 
+                color={colors.primary}
+              />
+              <Text style={styles.budgetText}>{getBudgetLabel(budget)}</Text>
             </View>
           </View>
         </View>
-      </ScrollView>
+      </View>
 
       <View style={styles.buttonContainer}>
         <OnboardingButton
           title="Créer ma famille"
           onPress={handleSubmit}
+          loading={isLoading}
         />
       </View>
     </SafeAreaView>
@@ -119,7 +154,7 @@ export default function Step6Summary() {
 const styles = StyleSheet.create({
   headerContainer: {
     paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.md,
+    paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.lg,
     paddingBottom: spacing.md,
     backgroundColor: colors.background,
     borderBottomWidth: 1,
@@ -142,63 +177,91 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     ...typography.body,
     color: colors.text.secondary,
-    marginTop: spacing.xs,
   },
   contentContainer: {
     flex: 1,
     padding: spacing.lg,
+    justifyContent: 'space-evenly',
   },
   section: {
     backgroundColor: colors.background,
     borderRadius: borderRadius.lg,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-    marginBottom: spacing.lg,
+    padding: spacing.lg,
+    marginVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  sectionHeader: {
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     ...typography.h2,
     color: colors.text.primary,
-    marginLeft: spacing.md,
-  },
-  sectionContent: {
-    padding: spacing.lg,
+    marginLeft: spacing.sm,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.md,
-  },
-  budgetRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  budgetIcon: {
-    marginRight: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   infoLabel: {
     ...typography.body,
+    fontSize: 16,
     color: colors.text.secondary,
-    flex: 1,
   },
   infoValue: {
     ...typography.body,
+    fontSize: 16,
     color: colors.text.primary,
-    fontWeight: '600',
-    textAlign: 'right',
+    fontWeight: '500',
+    marginLeft: spacing.sm,
+  },
+  countContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${colors.primary}10`,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  agesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  ageText: {
+    ...typography.body,
+    fontSize: 16,
+    color: colors.primary,
+  },
+  preferencesContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  preferenceText: {
+    ...typography.body,
+    fontSize: 16,
+    color: colors.primary,
+  },
+  budgetContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${colors.primary}10`,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  budgetText: {
+    ...typography.body,
+    fontSize: 16,
+    color: colors.primary,
+    marginLeft: spacing.sm,
   },
   buttonContainer: {
     padding: spacing.lg,

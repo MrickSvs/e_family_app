@@ -1,41 +1,49 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Créer une instance axios avec la configuration de base
-const api = axios.create({
-    baseURL: 'http://192.168.1.4:5001/api',
-    timeout: 30000,
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+
+export const api = axios.create({
+    baseURL: BASE_URL,
+    timeout: 10000,
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-// Ajouter un intercepteur pour les requêtes
+// Intercepteur pour ajouter le token d'authentification
 api.interceptors.request.use(
     async (config) => {
         try {
-            // Récupérer le device_id du stockage
-            const deviceId = await AsyncStorage.getItem('device_id');
-            if (deviceId) {
-                config.headers['device-id'] = deviceId;
+            const token = await AsyncStorage.getItem('authToken');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
             }
+            return config;
         } catch (error) {
-            console.error('Erreur lors de la récupération du device_id:', error);
+            return Promise.reject(error);
         }
-        return config;
     },
     (error) => {
         return Promise.reject(error);
     }
 );
 
-// Ajouter un intercepteur pour les réponses
+// Intercepteur pour gérer les erreurs de réponse
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
-        console.error('Erreur de réponse:', error.response?.data || error.message);
+    async (error) => {
+        if (error.response) {
+            // Gérer les erreurs d'authentification
+            if (error.response.status === 401) {
+                await AsyncStorage.removeItem('authToken');
+                // Rediriger vers la page de connexion si nécessaire
+            }
+            
+            // Formater le message d'erreur
+            const errorMessage = error.response.data.message || 'Une erreur est survenue';
+            error.message = errorMessage;
+        }
         return Promise.reject(error);
     }
-);
-
-export default api; 
+); 

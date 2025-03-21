@@ -14,11 +14,11 @@ export default function MyTripsScreen() {
   const navigation = useNavigation();
 
   // Exemple de données (à remplacer par des vraies données)
-  const upcomingTrips = [
+  const currentTrips = [
     {
       id: 1,
       title: "Road Trip Californie",
-      date: "15-30 Juillet 2024",
+      date: "En cours",
       imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1200,height=514,quality=70,fit=crop/offer/raw/2022/08/30/6e606193-8d44-4391-987d-a2b82e52cbde.jpg",
       progress: 60,
       description: "Un voyage inoubliable sur la côte ouest des États-Unis",
@@ -42,9 +42,39 @@ export default function MyTripsScreen() {
     },
   ];
 
-  const pastTrips = [
+  const upcomingTrips = [
+    {
+      id: 2,
+      title: "Séjour aux Maldives",
+      date: "15-30 Août 2024",
+      imageUrl: "https://www.maldives.com/wp-content/uploads/2021/01/maldives-family-resorts.jpg",
+      progress: 30,
+      description: "Un paradis tropical pour toute la famille",
+      duration: "10 jours",
+      type: "Séjour balnéaire",
+      price: "3500€ / personne",
+      priceDetails: "Vol + Resort tout inclus",
+      tags: ["Plage", "Luxe", "Relaxation", "Snorkeling"],
+    },
+  ];
+
+  const pendingQuotes = [
     {
       id: 3,
+      title: "Circuit Vietnam",
+      date: "En attente de devis",
+      imageUrl: "https://www.vietnam.travel/sites/default/files/2020-02/family-travel-vietnam.jpg",
+      description: "Découverte du Vietnam en famille",
+      duration: "14 jours",
+      type: "Circuit culturel",
+      status: "En cours de préparation",
+      tags: ["Culture", "Gastronomie", "Histoire", "Nature"],
+    },
+  ];
+
+  const pastTrips = [
+    {
+      id: 4,
       title: "Découverte du Japon",
       date: "Avril 2023",
       imageUrl: "https://www.japan-experience.com/sites/default/files/styles/scale_crop_880x460/public/legacy/japan_experience/content/images/voyager-au-japon-en-famille.jpg",
@@ -62,29 +92,66 @@ export default function MyTripsScreen() {
         { id: 2, title: "Repas traditionnel", description: "Dégustation de sushis en famille" }
       ]
     },
-    {
-      id: 4,
-      title: "Safari Kenya",
-      date: "Août 2023",
-      imageUrl: "https://www.kenya-guide.com/images/family-safari-1200.jpg",
-      rating: 4,
-      description: "Une aventure sauvage en famille",
-      duration: "10 jours",
-      type: "Safari",
-      gallery: [
-        "https://www.kenya-guide.com/images/family-safari-1200.jpg",
-        "https://www.naturaltoursandsafaris.com/images/kenya-family-safari.jpg"
-      ],
-      highlights: ["Masai Mara", "Lac Nakuru", "Amboseli"],
-      memories: [
-        { id: 1, title: "Lions", description: "Observation d'une famille de lions" },
-        { id: 2, title: "Village Masai", description: "Rencontre avec les locaux" }
-      ]
-    }
   ];
 
-  const navigateToTripDetail = (trip, isPast = false) => {
-    navigation.navigate(isPast ? "PastTripDetail" : "UpcomingTripDetail", { trip });
+  const navigateToTripDetail = (trip, type) => {
+    const params = { trip };
+    switch(type) {
+      case 'current':
+        navigation.navigate('CurrentTripDetail', params);
+        break;
+      case 'upcoming':
+        navigation.navigate('UpcomingTripDetail', params);
+        break;
+      case 'pending':
+        navigation.navigate('PendingQuoteDetail', params);
+        break;
+      case 'past':
+        navigation.navigate('PastTripDetail', params);
+        break;
+    }
+  };
+
+  const renderTripCard = (trip, type) => {
+    const isPending = type === 'pending';
+    
+    return (
+      <TouchableOpacity
+        key={trip.id}
+        style={[styles.tripCard, isPending && styles.pendingCard]}
+        onPress={() => navigateToTripDetail(trip, type)}
+      >
+        <Image source={{ uri: trip.imageUrl }} style={styles.tripImage} />
+        <View style={styles.tripInfo}>
+          <Text style={styles.tripTitle}>{trip.title}</Text>
+          <Text style={styles.tripDate}>{trip.date}</Text>
+          {!isPending && type !== 'past' && (
+            <>
+              <View style={styles.progressContainer}>
+                <View style={[styles.progressBar, { width: `${trip.progress}%` }]} />
+              </View>
+              <Text style={styles.progressText}>
+                Préparation : {trip.progress}%
+              </Text>
+            </>
+          )}
+          {type === 'past' && (
+            <View style={styles.ratingContainer}>
+              {[...Array(5)].map((_, i) => (
+                <Text key={i} style={styles.ratingStar}>
+                  {i < trip.rating ? "★" : "☆"}
+                </Text>
+              ))}
+            </View>
+          )}
+          {isPending && (
+            <View style={styles.pendingStatus}>
+              <Text style={styles.pendingStatusText}>{trip.status}</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -93,58 +160,31 @@ export default function MyTripsScreen() {
         {/* En-tête */}
         <View style={styles.header}>
           <Text style={styles.mainTitle}>Mes Voyages</Text>
-          <Text style={styles.subtitle}>Gérer mes voyages passés et à venir</Text>
+          <Text style={styles.subtitle}>Gérer tous mes voyages</Text>
+        </View>
+
+        {/* Section : Voyages en cours */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Voyages en cours</Text>
+          {currentTrips.map((trip) => renderTripCard(trip, 'current'))}
         </View>
 
         {/* Section : Voyages à venir */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Voyages à venir</Text>
-          {upcomingTrips.map((trip) => (
-            <TouchableOpacity
-              key={trip.id}
-              style={styles.tripCard}
-              onPress={() => navigateToTripDetail(trip)}
-            >
-              <Image source={{ uri: trip.imageUrl }} style={styles.tripImage} />
-              <View style={styles.tripInfo}>
-                <Text style={styles.tripTitle}>{trip.title}</Text>
-                <Text style={styles.tripDate}>{trip.date}</Text>
-                {/* Barre de progression */}
-                <View style={styles.progressContainer}>
-                  <View style={[styles.progressBar, { width: `${trip.progress}%` }]} />
-                </View>
-                <Text style={styles.progressText}>
-                  Préparation : {trip.progress}%
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {upcomingTrips.map((trip) => renderTripCard(trip, 'upcoming'))}
+        </View>
+
+        {/* Section : Voyages en attente de devis */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>En attente de devis</Text>
+          {pendingQuotes.map((trip) => renderTripCard(trip, 'pending'))}
         </View>
 
         {/* Section : Voyages passés */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Voyages passés</Text>
-          {pastTrips.map((trip) => (
-            <TouchableOpacity
-              key={trip.id}
-              style={styles.tripCard}
-              onPress={() => navigateToTripDetail(trip, true)}
-            >
-              <Image source={{ uri: trip.imageUrl }} style={styles.tripImage} />
-              <View style={styles.tripInfo}>
-                <Text style={styles.tripTitle}>{trip.title}</Text>
-                <Text style={styles.tripDate}>{trip.date}</Text>
-                {/* Affichage du rating */}
-                <View style={styles.ratingContainer}>
-                  {[...Array(5)].map((_, i) => (
-                    <Text key={i} style={styles.ratingStar}>
-                      {i < trip.rating ? "★" : "☆"}
-                    </Text>
-                  ))}
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+          {pastTrips.map((trip) => renderTripCard(trip, 'past'))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -197,6 +237,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  pendingCard: {
+    borderWidth: 1,
+    borderColor: "#FFA500",
+    borderStyle: "dashed",
+  },
   tripImage: {
     width: "100%",
     height: 150,
@@ -240,5 +285,17 @@ const styles = StyleSheet.create({
     color: "#ffd700",
     fontSize: 16,
     marginRight: 2,
+  },
+  pendingStatus: {
+    backgroundColor: "#FFF3E0",
+    padding: 4,
+    borderRadius: 4,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  pendingStatusText: {
+    color: "#FFA500",
+    fontSize: 12,
+    fontWeight: "500",
   },
 });

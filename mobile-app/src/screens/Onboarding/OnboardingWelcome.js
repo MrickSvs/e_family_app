@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, SafeAreaView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, SafeAreaView, Image, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, commonStyles } from '../../styles/onboardingStyles';
@@ -19,25 +19,20 @@ export default function OnboardingWelcome() {
 
   return (
     <SafeAreaView style={commonStyles.container}>
-      <View style={styles.headerContainer}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Bienvenue</Text>
-        </View>
-        <Text style={styles.headerSubtitle}>Commençons par faire connaissance</Text>
-      </View>
-
       <View style={styles.contentContainer}>
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="people" size={24} color={colors.primary} />
+        <View style={styles.welcomeSection}>
+          <Text style={styles.welcomeEmoji}>👋</Text>
+          <Text style={styles.headerTitle}>Bienvenue</Text>
+          <Text style={styles.headerSubtitle}>Commençons par faire connaissance</Text>
+        </View>
+
+        <View style={styles.familySection}>
+          <View style={styles.familyTitleContainer}>
             <Text style={styles.sectionTitle}>Votre famille</Text>
+            <Text style={styles.sectionSubtitle}>Comment souhaitez-vous être identifié ?</Text>
           </View>
           
-          <View style={styles.inputContainer}>
-            <View style={styles.labelContainer}>
-              <Ionicons name="home" size={20} color={colors.text.secondary} />
-              <Text style={styles.inputLabel}>Nom de famille</Text>
-            </View>
+          <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
               placeholder="Ex : Martin"
@@ -47,23 +42,24 @@ export default function OnboardingWelcome() {
               autoCapitalize="words"
               autoCorrect={false}
             />
-            <Text style={styles.inputHelper}>
-              Ce nom sera utilisé pour identifier votre famille
-            </Text>
+            <Ionicons 
+              name="people-outline" 
+              size={20} 
+              color={colors.text.secondary}
+              style={styles.inputIcon}
+            />
           </View>
         </View>
 
-        <View style={styles.welcomeMessage}>
-          <Ionicons name="information-circle" size={24} color={colors.primary} />
-          <Text style={styles.welcomeText}>
-            Nous allons vous aider à organiser des voyages parfaitement adaptés à votre famille.
-          </Text>
+        <View style={styles.infoSection}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+          <Text style={styles.infoText}>Cette information nous permettra de personnaliser votre expérience</Text>
         </View>
       </View>
 
       <View style={styles.buttonContainer}>
         <OnboardingButton
-          title="Commencer"
+          title="C'est parti !"
           onPress={handleStart}
         />
       </View>
@@ -72,107 +68,83 @@ export default function OnboardingWelcome() {
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: Platform.OS === 'android' ? spacing.xl : spacing.md,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  contentContainer: {
+    flex: 1,
+    padding: spacing.lg,
+    justifyContent: 'flex-start',
   },
-  headerTop: {
-    flexDirection: 'row',
+  welcomeSection: {
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginTop: Platform.OS === 'android' ? spacing.xl : spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  welcomeEmoji: {
+    fontSize: 48,
+    marginBottom: spacing.md,
   },
   headerTitle: {
     ...typography.h1,
     color: colors.text.primary,
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: spacing.xs,
   },
   headerSubtitle: {
     ...typography.body,
     color: colors.text.secondary,
-    marginTop: spacing.xs,
+    fontSize: 16,
   },
-  contentContainer: {
-    flex: 1,
-    padding: spacing.lg,
+  familySection: {
+    marginTop: spacing.xl,
   },
-  section: {
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.lg,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  familyTitleContainer: {
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     ...typography.h2,
     color: colors.text.primary,
-    marginLeft: spacing.md,
+    fontSize: 24,
+    marginBottom: spacing.xs,
   },
-  inputContainer: {
-    padding: spacing.lg,
-  },
-  labelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  inputLabel: {
+  sectionSubtitle: {
     ...typography.body,
     color: colors.text.secondary,
-    marginLeft: spacing.sm,
-    fontWeight: '500',
+    fontSize: 14,
+  },
+  inputWrapper: {
+    position: 'relative',
+    width: '100%',
+    marginTop: spacing.md,
   },
   input: {
     backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     padding: spacing.md,
-    fontSize: 16,
+    paddingRight: spacing.xl * 2,
+    fontSize: 18,
     color: colors.text.primary,
-    marginTop: spacing.xs,
+    width: '100%',
+    height: 56,
   },
-  inputHelper: {
+  inputIcon: {
+    position: 'absolute',
+    right: spacing.md,
+    top: '50%',
+    transform: [{ translateY: -10 }],
+  },
+  infoSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
+  infoText: {
     ...typography.caption,
     color: colors.text.secondary,
-    marginTop: spacing.xs,
     marginLeft: spacing.xs,
-  },
-  welcomeMessage: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: colors.background,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  welcomeText: {
-    ...typography.body,
-    color: colors.text.secondary,
     flex: 1,
-    marginLeft: spacing.md,
   },
   buttonContainer: {
     padding: spacing.lg,
