@@ -9,13 +9,15 @@ import {
   StyleSheet,
   Dimensions,
   FlatList,
-  Animated
+  Animated,
+  Modal
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { TripMap } from "../components/TripMap";
 import { theme } from "../styles/theme";
 import AgencyBlock from "../components/AgencyBlock";
+import DayDetailModal from "../components/DayDetailModal";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // Largeur de la carte avec marges
@@ -116,16 +118,25 @@ export default function CurrentTripDetailScreen() {
   const currentDayIndex = MOCK_TRIP_STEPS.findIndex(step => step.status === 'current');
   
   const [focusedStepIndex, setFocusedStepIndex] = useState(currentDayIndex);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [isDayDetailModalVisible, setIsDayDetailModalVisible] = useState(false);
   const flatListRef = useRef(null);
 
+  const handleDayPress = (day) => {
+    setSelectedDay(day);
+    setIsDayDetailModalVisible(true);
+  };
+
   const renderStepCard = ({ item, index }) => (
-    <View style={[
-      styles.stepCard,
-      index === focusedStepIndex && styles.stepCardFocused,
-      item.status === 'past' && styles.stepCardPast,
-      item.status === 'current' && styles.stepCardCurrent,
-      item.status === 'upcoming' && styles.stepCardUpcoming,
-    ]}>
+    <TouchableOpacity
+      onPress={() => handleDayPress(item)}
+      style={[
+        styles.stepCard,
+        index === focusedStepIndex && styles.stepCardFocused,
+        item.status === 'past' && styles.stepCardPast,
+        item.status === 'current' && styles.stepCardCurrent,
+        item.status === 'upcoming' && styles.stepCardUpcoming,
+      ]}>
       <View style={styles.stepHeader}>
         <Text style={[
           styles.stepDate,
@@ -205,7 +216,7 @@ export default function CurrentTripDetailScreen() {
           )}
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 
   const onStepChange = (index) => {
@@ -319,6 +330,17 @@ export default function CurrentTripDetailScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <DayDetailModal
+        visible={isDayDetailModalVisible}
+        onClose={() => setIsDayDetailModalVisible(false)}
+        day={selectedDay}
+        onSaveFeedback={(feedback) => {
+          // TODO: Implement feedback saving logic
+          console.log('Saving feedback:', feedback);
+          setIsDayDetailModalVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
