@@ -18,17 +18,7 @@ export const getFamilyInfo = async () => {
             throw new Error(data.message || 'Failed to fetch family info');
         }
 
-        // Récupérer les préférences stockées localement
-        const preferences = await AsyncStorage.getItem('familyPreferences');
-        const familyPreferences = preferences ? JSON.parse(preferences) : {
-            travel_type: "Non spécifié",
-            budget: "Non spécifié"
-        };
-
-        return {
-            ...data.data,
-            ...familyPreferences
-        };
+        return data.data;
     } catch (error) {
         console.error('Error fetching family info:', error);
         throw error;

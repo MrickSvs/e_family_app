@@ -1,9 +1,44 @@
-import React, { useState, useEffect } from "react";
-import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import React, { useState } from "react";
+import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View, TouchableOpacity, Text } from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { getFamilyInfo } from "../services/familyService";
-import { Text, TripCard, InfoMessage } from "../components/design-system";
+import { TripCard, InfoMessage } from "../components/design-system";
 import { theme } from "../styles/theme";
+import { Ionicons } from "@expo/vector-icons";
+
+const FamilyHeader = ({ family }) => {
+  const navigation = useNavigation();
+
+  if (!family) return null;
+
+  const adultsCount = family.members?.filter(m => m.role === 'Adulte').length || 0;
+  const childrenCount = family.members?.filter(m => m.role === 'Enfant').length || 0;
+
+  return (
+    <TouchableOpacity 
+      style={styles.familyHeader}
+      onPress={() => navigation.navigate('Profile')}
+    >
+      <View style={styles.familyContent}>
+        <View style={styles.familyInfo}>
+          <Text style={styles.familyName}>{family.family_name || 'Ma Famille'}</Text>
+          <Text style={styles.familyComposition}>
+            {adultsCount} adulte{adultsCount > 1 ? 's' : ''} • {childrenCount} enfant{childrenCount > 1 ? 's' : ''}
+          </Text>
+        </View>
+        <View style={styles.editIconContainer}>
+          <Ionicons name="chevron-forward" size={20} color="#0F8066" />
+        </View>
+      </View>
+
+      {family.travel_preferences?.travel_type?.length > 0 && (
+        <Text style={styles.preferences}>
+          {family.travel_preferences.travel_type.join(' • ')}
+        </Text>
+      )}
+    </TouchableOpacity>
+  );
+};
 
 export default function FamilyTripsScreen() {
   const navigation = useNavigation();
@@ -11,44 +46,42 @@ export default function FamilyTripsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadFamilyData();
-  }, []);
-
   const loadFamilyData = async () => {
     try {
-      const data = await getFamilyInfo();
-      setFamilyData(data);
+      setLoading(true);
+      setError(null);
+      const response = await getFamilyInfo();
+      console.log("✅ Données reçues:", response);
+      setFamilyData(response);
     } catch (err) {
+      console.error("❌ Erreur:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadFamilyData();
+    }, [])
+  );
+
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContainer]}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#0F8066" />
       </SafeAreaView>
     );
   }
 
   if (error) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContainer]}>
-        <InfoMessage
-          variant="error"
-          message={`Une erreur est survenue: ${error}`}
-        />
-        <Text
-          variant="body"
-          color="primary"
-          style={styles.retryText}
-          onPress={loadFamilyData}
-        >
-          Réessayer
-        </Text>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>Une erreur est survenue: {error}</Text>
+        <TouchableOpacity onPress={loadFamilyData}>
+          <Text style={styles.retryText}>Réessayer</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -103,16 +136,14 @@ export default function FamilyTripsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Evaneos Family</Text>
-          <View style={styles.yellowDot} />
-        </View>
+        <Text style={styles.title}>Evaneos Family</Text>
       </View>
 
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
+        <FamilyHeader family={familyData} />
         {trips.map((trip) => (
           <TripCard
             key={trip.id}
@@ -131,38 +162,68 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F5ED',
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    padding: 16,
     backgroundColor: '#F7F5ED',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
   },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#333333',
   },
-  yellowDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.colors.secondary,
-    marginLeft: 8,
-  },
-  centerContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  scrollContainer: {
-    paddingVertical: 16,
+  errorText: {
+    color: '#FF0000',
+    textAlign: 'center',
+    margin: 16,
   },
   retryText: {
-    marginTop: 16,
+    color: '#0F8066',
+    textAlign: 'center',
     textDecorationLine: 'underline',
+  },
+  familyHeader: {
+    backgroundColor: '#FFFFFF',
+    margin: 16,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  familyContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  familyInfo: {
+    flex: 1,
+  },
+  familyName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
+  },
+  familyComposition: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  preferences: {
+    fontSize: 13,
+    color: '#0F8066',
+    marginTop: 8,
+  },
+  editIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#0F806610',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContainer: {
+    paddingBottom: 16,
   },
 });
