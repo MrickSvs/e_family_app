@@ -16,7 +16,32 @@ import AgencyBlock from "../components/AgencyBlock";
 export default function UpcomingTripDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { tripId, title, date, imageUrl } = route.params || {};
+  const { trip } = route.params || {};
+
+  console.log('UpcomingTripDetailScreen - route.params:', route.params);
+  console.log('UpcomingTripDetailScreen - trip:', trip);
+
+  if (!trip) {
+    console.error('Aucun voyage fourni dans les paramètres');
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.section, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Text style={styles.errorText}>Impossible de charger les détails du voyage</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const { tripId, title, date, imageUrl } = trip;
 
   // Exemple de checklist (une vraie app stockerait ça dans un backend ou AsyncStorage)
   const [checklist, setChecklist] = useState([
@@ -294,5 +319,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     color: '#333',
+  },
+  errorText: {
+    color: '#ff0000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

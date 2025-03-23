@@ -174,11 +174,11 @@ export default function CreateTripModal({ visible, onClose, itinerary, familyMem
                                         key={member.id}
                                         style={[
                                             styles.participantCard,
-                                            selectedMembers.includes(member) && styles.participantCardSelected
+                                            selectedMembers.some(m => m.id === member.id) && styles.participantCardSelected
                                         ]}
                                         onPress={() => {
                                             setSelectedMembers(prev =>
-                                                prev.includes(member)
+                                                prev.some(m => m.id === member.id)
                                                     ? prev.filter(m => m.id !== member.id)
                                                     : [...prev, member]
                                             );
@@ -186,23 +186,23 @@ export default function CreateTripModal({ visible, onClose, itinerary, familyMem
                                     >
                                         <View style={[
                                             styles.participantIcon,
-                                            selectedMembers.includes(member) && styles.participantIconSelected
+                                            selectedMembers.some(m => m.id === member.id) && styles.participantIconSelected
                                         ]}>
                                             <Ionicons
                                                 name={member.role === 'Adulte' ? 'person' : 'body-outline'}
                                                 size={24}
-                                                color={selectedMembers.includes(member) ? '#fff' : theme.colors.primary}
+                                                color={selectedMembers.some(m => m.id === member.id) ? '#fff' : theme.colors.primary}
                                             />
                                         </View>
                                         <Text style={[
                                             styles.participantName,
-                                            selectedMembers.includes(member) && styles.participantNameSelected
+                                            selectedMembers.some(m => m.id === member.id) && styles.participantNameSelected
                                         ]}>
                                             {member.first_name}
                                         </Text>
                                         <Text style={[
                                             styles.participantRole,
-                                            selectedMembers.includes(member) && styles.participantRoleSelected
+                                            selectedMembers.some(m => m.id === member.id) && styles.participantRoleSelected
                                         ]}>
                                             {member.role}
                                         </Text>

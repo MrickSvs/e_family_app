@@ -4,6 +4,48 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, commonStyles } from '../../styles/onboardingStyles';
 import OnboardingButton from '../../components/OnboardingButton';
+import { saveOnboardingData } from '../../services/onboardingService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Device from 'expo-device';
+
+// Fonction pour générer un UUID v4
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Mapping des valeurs pour l'affichage
+const TRAVEL_TYPE_DISPLAY = {
+  'RELAX': 'Détente',
+  'ADVENTURE': 'Aventure',
+  'DISCOVERY': 'Découverte',
+  'CULTURE': 'Culture'
+};
+
+const BUDGET_DISPLAY = {
+  'ECONOMY': 'Économique',
+  'MODERATE': 'Modéré',
+  'COMFORT': 'Confort',
+  'LUXURY': 'Luxe'
+};
+
+// Mapping des valeurs pour l'API
+const TRAVEL_TYPE_API = {
+  'RELAX': 'Détente',
+  'ADVENTURE': 'Aventure',
+  'DISCOVERY': 'Découverte',
+  'CULTURE': 'Culture'
+};
+
+const BUDGET_API = {
+  'ECONOMY': 'Économique',
+  'MODERATE': 'Modéré',
+  'COMFORT': 'Confort',
+  'LUXURY': 'Luxe'
+};
 
 export default function Step6Summary() {
   const navigation = useNavigation();
@@ -14,17 +56,71 @@ export default function Step6Summary() {
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-      // Simulation d'un délai pour montrer le loading state
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Générer un UUID v4 valide pour device_id
+      const deviceId = uuidv4();
+      
+      // Créer la liste des membres
+      const members = [];
+      
+      // Ajouter les adultes
+      for (let i = 0; i < adults; i++) {
+        members.push({
+          first_name: `Adulte ${i + 1}`,
+          last_name: familyName,
+          role: 'Adulte'
+        });
+      }
+      
+      // Ajouter les enfants avec leurs âges
+      for (let i = 0; i < children; i++) {
+        const birthDate = new Date();
+        birthDate.setFullYear(birthDate.getFullYear() - childrenAges[i]);
+        
+        members.push({
+          first_name: `Enfant ${i + 1}`,
+          last_name: familyName,
+          role: 'Enfant',
+          birth_date: birthDate.toISOString().split('T')[0]
+        });
+      }
+
+      const familyData = {
+        device_id: deviceId,
+        family_name: familyName,
+        members,
+        travel_preferences: {
+          travel_type: Array.isArray(travel_preferences) 
+            ? travel_preferences
+                .filter(type => type !== undefined)
+                .map(type => TRAVEL_TYPE_API[type] || type)
+            : [TRAVEL_TYPE_API[travel_preferences] || travel_preferences],
+          budget: BUDGET_API[budget]
+        }
+      };
+
+      console.log("📤 Envoi des données d'onboarding:", familyData);
+      
+      const result = await saveOnboardingData(familyData);
+      
+      if (!result.success) {
+        throw new Error(result.message || "Erreur lors de la création de la famille");
+      }
+
+      // Sauvegarder le deviceId dans AsyncStorage
+      await AsyncStorage.setItem('deviceId', deviceId);
+
+      console.log("✅ Famille créée avec succès:", result.data);
       
       navigation.reset({
         index: 0,
         routes: [{ name: 'Main' }],
       });
     } catch (error) {
+      console.error("❌ Erreur lors de la création de la famille:", error);
       Alert.alert(
         "Erreur",
-        "Une erreur est survenue lors de la création de votre famille. Veuillez réessayer.",
+        error.message || "Une erreur est survenue lors de la création de votre famille. Veuillez réessayer.",
         [{ text: "OK" }]
       );
     } finally {
@@ -48,6 +144,10 @@ export default function Step6Summary() {
       case 'LUXURY': return 'diamond-stone';
       default: return 'wallet';
     }
+  };
+
+  const getDisplayTravelType = (type) => {
+    return TRAVEL_TYPE_DISPLAY[type] || type;
   };
 
   return (
@@ -120,7 +220,7 @@ export default function Step6Summary() {
             <View style={styles.preferencesContainer}>
               {travel_preferences.map((pref, index) => (
                 <Text key={index} style={styles.preferenceText}>
-                  {index > 0 ? ' • ' : ''}{pref}
+                  {index > 0 ? ' • ' : ''}{getDisplayTravelType(pref)}
                 </Text>
               ))}
             </View>

@@ -32,23 +32,28 @@ const createDefaultProfile = async (deviceId) => {
 
 export const getProfile = async () => {
   try {
-    const deviceId = await AsyncStorage.getItem('deviceId');
-    if (!deviceId) {
-      throw new Error('Device ID not found');
-    }
+    const deviceId = await getDeviceId();
 
     const response = await fetch(`${API_URL}/families/by-device/${deviceId}`);
     const data = await response.json();
+
+    console.log("Response from API:", data); // Debug log
 
     if (!response.ok) {
       console.error("❌ Erreur lors de la récupération du profil:", data);
       
       if (response.status === 404) {
         // Si le profil n'existe pas, on en crée un par défaut
-        return await createDefaultProfile();
+        return await createDefaultProfile(deviceId);
       }
 
       throw new Error(data.message || 'Failed to fetch profile');
+    }
+
+    // Vérifier si la réponse a la structure attendue
+    if (!data.success || !data.data) {
+      console.error("❌ Format de réponse invalide:", data);
+      throw new Error('Invalid response format');
     }
 
     return data.data;
@@ -60,10 +65,7 @@ export const getProfile = async () => {
 
 export const updateFamilyProfile = async (profileData) => {
   try {
-    const deviceId = await AsyncStorage.getItem('deviceId');
-    if (!deviceId) {
-      throw new Error('Device ID not found');
-    }
+    const deviceId = await getDeviceId();
 
     const response = await fetch(`${API_URL}/families/by-device/${deviceId}`, {
       method: 'PUT',
@@ -98,10 +100,7 @@ export const updateFamilyProfile = async (profileData) => {
 
 export const updateMemberProfile = async (memberId, memberData) => {
   try {
-    const deviceId = await AsyncStorage.getItem('deviceId');
-    if (!deviceId) {
-      throw new Error('Device ID not found');
-    }
+    const deviceId = await getDeviceId();
 
     const response = await fetch(`${API_URL}/families/by-device/${deviceId}/members/${memberId}`, {
       method: 'PUT',
@@ -136,10 +135,7 @@ export const updateMemberProfile = async (memberId, memberData) => {
 
 export const addFamilyMember = async (memberData) => {
   try {
-    const deviceId = await AsyncStorage.getItem('deviceId');
-    if (!deviceId) {
-      throw new Error('Device ID not found');
-    }
+    const deviceId = await getDeviceId();
 
     const response = await fetch(`${API_URL}/families/by-device/${deviceId}/members`, {
       method: 'POST',

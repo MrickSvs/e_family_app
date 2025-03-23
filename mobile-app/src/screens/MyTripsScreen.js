@@ -95,20 +95,29 @@ export default function MyTripsScreen() {
   ];
 
   const navigateToTripDetail = (trip, type) => {
+    console.log('Tentative de navigation vers le détail du voyage:', { type, tripId: trip.id, title: trip.title });
     const params = { trip };
-    switch(type) {
-      case 'current':
-        navigation.navigate('CurrentTripDetail', params);
-        break;
-      case 'upcoming':
-        navigation.navigate('UpcomingTripDetail', params);
-        break;
-      case 'pending':
-        navigation.navigate('PendingQuoteDetail', params);
-        break;
-      case 'past':
-        navigation.navigate('PastTripDetail', params);
-        break;
+    try {
+      switch(type) {
+        case 'current':
+          console.log('Navigation vers CurrentTripDetail avec params:', params);
+          navigation.navigate('CurrentTripDetail', params);
+          break;
+        case 'upcoming':
+          console.log('Navigation vers UpcomingTripDetail avec params:', params);
+          navigation.navigate('UpcomingTripDetail', params);
+          break;
+        case 'pending':
+          console.log('Navigation vers PendingQuoteDetail avec params:', params);
+          navigation.navigate('PendingQuoteDetail', params);
+          break;
+        case 'past':
+          console.log('Navigation vers PastTripDetail avec params:', params);
+          navigation.navigate('PastTripDetail', params);
+          break;
+      }
+    } catch (error) {
+      console.error('Erreur lors de la navigation:', error);
     }
   };
 

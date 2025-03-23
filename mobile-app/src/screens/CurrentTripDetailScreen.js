@@ -17,6 +17,29 @@ export default function CurrentTripDetailScreen() {
   const navigation = useNavigation();
   const { trip } = route.params || {};
 
+  console.log('CurrentTripDetailScreen - route.params:', route.params);
+  console.log('CurrentTripDetailScreen - trip:', trip);
+
+  if (!trip) {
+    console.error('Aucun voyage fourni dans les paramètres');
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.section, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Text style={styles.errorText}>Impossible de charger les détails du voyage</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // Exemple de données pour le voyage en cours
   const [currentLocation] = useState({
     name: "Santa Monica",
@@ -250,5 +273,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#FF3B30",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 }); 

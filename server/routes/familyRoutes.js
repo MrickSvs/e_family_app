@@ -5,6 +5,141 @@ const { auth } = require('../middleware/auth');
 const pool = require('../config/db');
 const Joi = require('joi');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Family:
+ *       type: object
+ *       properties:
+ *         family_name:
+ *           type: string
+ *           description: Nom de la famille
+ *         interests:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Liste des intérêts de la famille
+ *         travel_preferences:
+ *           type: object
+ *           properties:
+ *             travel_type:
+ *               type: array
+ *               items:
+ *                 type: string
+ *                 enum: [Découverte, Aventure, Détente, Culture]
+ *             budget:
+ *               type: string
+ *               enum: [Économique, Modéré, Confort, Luxe]
+ *     FamilyMember:
+ *       type: object
+ *       required:
+ *         - first_name
+ *         - role
+ *       properties:
+ *         first_name:
+ *           type: string
+ *           description: Prénom du membre
+ *         last_name:
+ *           type: string
+ *           description: Nom de famille du membre
+ *         role:
+ *           type: string
+ *           enum: [Adulte, Enfant]
+ *           description: Rôle dans la famille
+ *         birth_date:
+ *           type: string
+ *           format: date
+ *           description: Date de naissance (obligatoire pour les enfants)
+ *         dietary_restrictions:
+ *           type: string
+ *           description: Restrictions alimentaires
+ */
+
+/**
+ * @swagger
+ * /api/families/by-device/{device_id}:
+ *   get:
+ *     summary: Récupérer les informations d'une famille par device_id
+ *     tags: [Families]
+ *     parameters:
+ *       - in: path
+ *         name: device_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Informations de la famille récupérées avec succès
+ *       404:
+ *         description: Famille non trouvée
+ *   post:
+ *     summary: Créer un profil familial
+ *     tags: [Families]
+ *     parameters:
+ *       - in: path
+ *         name: device_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Family'
+ *     responses:
+ *       201:
+ *         description: Profil familial créé avec succès
+ *       400:
+ *         description: Données invalides
+ *   put:
+ *     summary: Mettre à jour un profil familial
+ *     tags: [Families]
+ *     parameters:
+ *       - in: path
+ *         name: device_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Family'
+ *     responses:
+ *       200:
+ *         description: Profil familial mis à jour avec succès
+ *       404:
+ *         description: Famille non trouvée
+ */
+
+/**
+ * @swagger
+ * /api/families/by-device/{device_id}/members:
+ *   post:
+ *     summary: Ajouter un membre à une famille
+ *     tags: [Families]
+ *     parameters:
+ *       - in: path
+ *         name: device_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/FamilyMember'
+ *     responses:
+ *       201:
+ *         description: Membre ajouté avec succès
+ *       404:
+ *         description: Famille non trouvée
+ */
+
 // Schéma de validation pour la création/mise à jour d'une famille
 const familySchema = Joi.object({
     family_name: Joi.string().min(2).max(255),
@@ -80,7 +215,10 @@ router.get('/by-device/:device_id', async (req, res) => {
         `, [req.params.device_id]);
 
         if (familyResult.rows.length === 0) {
-            return res.status(404).json({ success: false, message: "Famille non trouvée" });
+            return res.status(404).json({ 
+                success: false, 
+                message: "Famille non trouvée" 
+            });
         }
 
         // Récupérer les membres de la famille
@@ -126,7 +264,10 @@ router.get('/by-device/:device_id', async (req, res) => {
         });
     } catch (error) {
         console.error("❌ [getFamilyInfo] Erreur:", error);
-        res.status(500).json({ success: false, message: "Erreur serveur" });
+        res.status(500).json({ 
+            success: false, 
+            message: "Erreur serveur" 
+        });
     }
 });
 

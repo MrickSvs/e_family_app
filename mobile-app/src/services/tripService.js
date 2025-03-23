@@ -1,4 +1,4 @@
-import api from './api';
+import { api } from './api';
 
 export const createTrip = async (tripData) => {
     console.log('tripService.createTrip - Données envoyées:', tripData);

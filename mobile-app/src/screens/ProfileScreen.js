@@ -85,8 +85,12 @@ export default function ProfileScreen() {
   };
 
   const handleMemberEdit = (member) => {
-    setEditingMember(member);
-    setShowEditMemberModal(true);
+    if (editMode) {
+      setEditingMember(member);
+      setShowEditMemberModal(true);
+    } else {
+      navigation.navigate('FamilyProfile', { memberId: member.id });
+    }
   };
 
   const handleMemberUpdate = async (memberId, data) => {

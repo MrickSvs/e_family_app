@@ -15,22 +15,64 @@ const Stack = createNativeStackNavigator();
 
 export default function MainNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator>
       {/* Écran principal, affiché par défaut quand on rentre dans Main */}
-      <Stack.Screen name="FamilyTripsScreen" component={FamilyTripsScreen} />
+      <Stack.Screen 
+        name="FamilyTripsScreen" 
+        component={FamilyTripsScreen}
+        options={{ headerShown: false }}
+      />
 
       {/* Les autres écrans du menu */}
-      <Stack.Screen name="MyTripsScreen" component={MyTripsScreen} />
-      <Stack.Screen name="AssistanceScreen" component={AssistanceScreen} />
-      <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+      <Stack.Screen 
+        name="MyTripsScreen" 
+        component={MyTripsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="AssistanceScreen" 
+        component={AssistanceScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="ProfileScreen" 
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
       
-      {/* Wizard de complétion */}
-      <Stack.Screen name="FamilyProfile" component={FamilyProfileScreen} />
+      {/* Écran de profil détaillé */}
+      <Stack.Screen 
+        name="FamilyProfile" 
+        component={FamilyProfileScreen}
+        options={{
+          headerShown: true,
+          title: 'Profil Familial',
+          headerBackTitle: 'Retour'
+        }}
+      />
 
-      {/* Ecrans de voyage */}
+      {/* Écran de détail des itinéraires */}
+      <Stack.Screen 
+        name="TripDetail" 
+        component={TripDetailScreen}
+        options={{ headerShown: true }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Navigateur pour la section Mes Voyages
+export function MyTripsNavigator() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animation: 'slide_from_right',
+      }}
+    >
+      <Stack.Screen name="MyTripsList" component={MyTripsScreen} />
       <Stack.Screen name="UpcomingTripDetail" component={UpcomingTripDetailScreen} />
       <Stack.Screen name="PastTripDetail" component={PastTripDetailScreen} />
-      <Stack.Screen name="TripDetail" component={TripDetailScreen} />
       <Stack.Screen name="CurrentTripDetail" component={CurrentTripDetailScreen} />
       <Stack.Screen name="PendingQuoteDetail" component={PendingQuoteDetailScreen} />
     </Stack.Navigator>

@@ -21,6 +21,8 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import UpcomingTripDetailScreen from './src/screens/UpcomingTripDetailScreen';
 import PastTripDetailScreen from './src/screens/PastTripDetailScreen';
 import TripDetailScreen from './src/screens/TripDetailScreen';
+import CurrentTripDetailScreen from './src/screens/CurrentTripDetailScreen';
+import PendingQuoteDetailScreen from './src/screens/PendingQuoteDetailScreen';
 
 const OnboardingStack = createNativeStackNavigator();
 const MainStack = createNativeStackNavigator();
@@ -60,6 +62,8 @@ function MyTripsNavigator() {
       <MyTripsStack.Screen name="MyTripsList" component={MyTripsScreen} />
       <MyTripsStack.Screen name="UpcomingTripDetail" component={UpcomingTripDetailScreen} />
       <MyTripsStack.Screen name="PastTripDetail" component={PastTripDetailScreen} />
+      <MyTripsStack.Screen name="CurrentTripDetail" component={CurrentTripDetailScreen} />
+      <MyTripsStack.Screen name="PendingQuoteDetail" component={PendingQuoteDetailScreen} />
     </MyTripsStack.Navigator>
   );
 }
@@ -105,7 +109,10 @@ function MainNavigator() {
       <Tab.Screen 
         name="Profile" 
         component={ProfileScreen}
-        options={{ tabBarLabel: 'Profil' }}
+        options={{ 
+          tabBarLabel: 'Profil',
+          title: 'Mon Profil'
+        }}
       />
     </Tab.Navigator>
   );

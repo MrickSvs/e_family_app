@@ -1,23 +1,22 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+import { API_URL } from '../config';
 
 export const api = axios.create({
-    baseURL: BASE_URL,
+    baseURL: API_URL,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json'
     }
 });
 
-// Intercepteur pour ajouter le token d'authentification
+// Intercepteur pour ajouter le device-id
 api.interceptors.request.use(
     async (config) => {
         try {
-            const token = await AsyncStorage.getItem('authToken');
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
+            const deviceId = await AsyncStorage.getItem('deviceId');
+            if (deviceId) {
+                config.headers['device-id'] = deviceId;
             }
             return config;
         } catch (error) {
@@ -34,12 +33,6 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         if (error.response) {
-            // Gérer les erreurs d'authentification
-            if (error.response.status === 401) {
-                await AsyncStorage.removeItem('authToken');
-                // Rediriger vers la page de connexion si nécessaire
-            }
-            
             // Formater le message d'erreur
             const errorMessage = error.response.data.message || 'Une erreur est survenue';
             error.message = errorMessage;

@@ -17,6 +17,29 @@ export default function PendingQuoteDetailScreen() {
   const navigation = useNavigation();
   const { trip } = route.params || {};
 
+  console.log('PendingQuoteDetailScreen - route.params:', route.params);
+  console.log('PendingQuoteDetailScreen - trip:', trip);
+
+  if (!trip) {
+    console.error('Aucun voyage fourni dans les paramètres');
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.section, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Text style={styles.errorText}>Impossible de charger les détails du devis</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // Exemple de données pour le devis en attente
   const [quoteDetails] = useState({
     status: "En cours de préparation",
@@ -299,5 +322,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "bold",
   },
 }); 

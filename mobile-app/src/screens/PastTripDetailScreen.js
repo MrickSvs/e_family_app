@@ -17,7 +17,30 @@ import AgencyBlock from "../components/AgencyBlock";
 export default function PastTripDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { trip } = route.params;
+  const { trip } = route.params || {};
+
+  console.log('PastTripDetailScreen - route.params:', route.params);
+  console.log('PastTripDetailScreen - trip:', trip);
+
+  if (!trip) {
+    console.error('Aucun voyage fourni dans les paramètres');
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.section, { alignItems: 'center', justifyContent: 'center' }]}>
+          <Text style={styles.errorText}>Impossible de charger les détails du voyage</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -195,5 +218,11 @@ const styles = StyleSheet.create({
     height: 150,
     marginRight: 12,
     borderRadius: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 16,
   },
 });
