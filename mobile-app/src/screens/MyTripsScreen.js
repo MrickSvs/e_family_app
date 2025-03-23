@@ -17,27 +17,37 @@ export default function MyTripsScreen() {
   const currentTrips = [
     {
       id: 1,
-      title: "Road Trip Californie",
+      title: "Costa Rica en famille",
       date: "En cours",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1200,height=514,quality=70,fit=crop/offer/raw/2022/08/30/6e606193-8d44-4391-987d-a2b82e52cbde.jpg",
+      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/08/03/6d2d255d-c122-4ef7-99ab-80624f563bb6.jpg",
       progress: 60,
-      description: "Un voyage inoubliable sur la côte ouest des États-Unis",
-      duration: "15 jours",
-      type: "Road Trip en famille",
-      price: "4500€ / personne",
-      priceDetails: "Vol + Hébergement + Location voiture",
-      tags: ["Nature", "Plage", "Ville", "Culture"],
+      description: "Découverte du Costa Rica en famille : volcans, plages paradisiaques et forêts tropicales",
+      duration: "10 jours",
+      type: "Circuit nature et plage",
+      price: "3200€ / personne",
+      priceDetails: "Vol + Hébergement + Transport",
+      tags: ["Nature", "Plage", "Famille", "Aventure"],
+      gallery: [
+        "https://images.unsplash.com/photo-1589820296156-2454bb8a6ad1", // Volcan Arenal
+        "https://images.unsplash.com/photo-1589308454676-21b1aa8b8c1c", // Manuel Antonio
+        "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5", // Plage Tamarindo
+        "https://images.unsplash.com/photo-1518183261945-b0989cfb3723", // San José
+        "https://images.unsplash.com/photo-1542736705-53f0131d1e98", // Forêt tropicale
+        "https://images.unsplash.com/photo-1580094777767-4aa98f7e7696", // Parc national de Tortuguero
+      ],
       itinerary: [
-        { day: 1, title: "Los Angeles", description: "Arrivée et installation" },
-        { day: 2, title: "Santa Monica", description: "Plage et Pier" }
+        { day: 1, title: "San José", description: "Arrivée et installation" },
+        { day: 2, title: "Arenal", description: "Volcan et sources chaudes" },
+        { day: 3, title: "Manuel Antonio", description: "Parc national et plage" },
+        { day: 4, title: "Tamarindo", description: "Surf et détente" }
       ],
       practicalInfo: {
         difficulty: "Facile",
-        transport: "Location de voiture",
+        transport: "Minibus privé",
         accommodation: "Hôtels 3-4*",
         meals: "Petits déjeuners inclus",
-        included: ["Vols", "Hôtels", "Location voiture"],
-        notIncluded: ["Repas", "Activités", "Essence"]
+        included: ["Vols", "Hôtels", "Transferts", "Guide francophone"],
+        notIncluded: ["Déjeuners", "Dîners", "Activités optionnelles"]
       }
     },
   ];
@@ -47,7 +57,7 @@ export default function MyTripsScreen() {
       id: 2,
       title: "Séjour aux Maldives",
       date: "15-30 Août 2024",
-      imageUrl: "https://www.maldives.com/wp-content/uploads/2021/01/maldives-family-resorts.jpg",
+      imageUrl: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8",
       progress: 30,
       description: "Un paradis tropical pour toute la famille",
       duration: "10 jours",
@@ -55,6 +65,12 @@ export default function MyTripsScreen() {
       price: "3500€ / personne",
       priceDetails: "Vol + Resort tout inclus",
       tags: ["Plage", "Luxe", "Relaxation", "Snorkeling"],
+      gallery: [
+        "https://images.unsplash.com/photo-1514282401047-d79a71a590e8", // Vue aérienne
+        "https://images.unsplash.com/photo-1540202403-b7abd6747a18", // Villa sur pilotis
+        "https://images.unsplash.com/photo-1583212292454-39d2a86a7921", // Snorkeling
+        "https://images.unsplash.com/photo-1578922746465-3a80a228f223", // Coucher de soleil
+      ],
     },
   ];
 
@@ -63,12 +79,18 @@ export default function MyTripsScreen() {
       id: 3,
       title: "Circuit Vietnam",
       date: "En attente de devis",
-      imageUrl: "https://www.vietnam.travel/sites/default/files/2020-02/family-travel-vietnam.jpg",
+      imageUrl: "https://images.unsplash.com/photo-1557750255-c76072a7aad1",
       description: "Découverte du Vietnam en famille",
       duration: "14 jours",
       type: "Circuit culturel",
       status: "En cours de préparation",
       tags: ["Culture", "Gastronomie", "Histoire", "Nature"],
+      gallery: [
+        "https://images.unsplash.com/photo-1557750255-c76072a7aad1", // Baie d'Halong
+        "https://images.unsplash.com/photo-1583417319070-4a69db38a482", // Rizières
+        "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b", // Hoi An
+        "https://images.unsplash.com/photo-1555921015-5532091f6026", // Temple
+      ],
     },
   ];
 
@@ -77,19 +99,38 @@ export default function MyTripsScreen() {
       id: 4,
       title: "Découverte du Japon",
       date: "Avril 2023",
-      imageUrl: "https://www.japan-experience.com/sites/default/files/styles/scale_crop_880x460/public/legacy/japan_experience/content/images/voyager-au-japon-en-famille.jpg",
+      imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
       rating: 5,
       description: "Un voyage culturel au pays du soleil levant",
       duration: "12 jours",
       type: "Circuit culturel",
       gallery: [
-        "https://www.japan-experience.com/sites/default/files/styles/scale_crop_880x460/public/legacy/japan_experience/content/images/voyager-au-japon-en-famille.jpg",
-        "https://www.japan-guide.com/g18/627_01.jpg"
+        "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e", // Temple de Kyoto
+        "https://images.unsplash.com/photo-1528360983277-13d401cdc186", // Tokyo nuit
+        "https://images.unsplash.com/photo-1545569341-9eb8b30979d9", // Mont Fuji
+        "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d", // Jardin traditionnel
+        "https://images.unsplash.com/photo-1503899036084-c55cdd92da26", // Rue traditionnelle
       ],
       highlights: ["Tokyo", "Kyoto", "Mont Fuji"],
       memories: [
-        { id: 1, title: "Temple d'or", description: "Visite magique au coucher du soleil" },
-        { id: 2, title: "Repas traditionnel", description: "Dégustation de sushis en famille" }
+        { 
+          id: 1, 
+          title: "Temple d'or", 
+          description: "Visite magique au coucher du soleil",
+          photos: [
+            "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
+            "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d"
+          ]
+        },
+        { 
+          id: 2, 
+          title: "Repas traditionnel", 
+          description: "Dégustation de sushis en famille",
+          photos: [
+            "https://images.unsplash.com/photo-1553621042-f6e147245754",
+            "https://images.unsplash.com/photo-1579871494447-9811cf80d66c"
+          ]
+        }
       ]
     },
   ];

@@ -25,58 +25,118 @@ const CARD_MARGIN = 8;
 const MOCK_TRIP_STEPS = [
   {
     coordinate: {
-      latitude: 48.8566,
-      longitude: 2.3522
+      latitude: 9.9281,
+      longitude: -84.0907
     },
-    name: "Paris",
+    name: "San José",
     date: "15 Mars 2024",
-    imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34",
-    description: "Départ de l'aventure depuis Paris. Rendez-vous à l'aéroport Charles de Gaulle pour le grand départ !"
+    imageUrl: "https://images.unsplash.com/photo-1518183261945-b0989cfb3723",
+    description: "Arrivée à San José ! Installation à l'hôtel et première découverte de la capitale costaricaine.",
+    program: [
+      { time: "14:00", activity: "Arrivée à l'aéroport", icon: "airplane-outline" },
+      { time: "16:00", activity: "Check-in à l'hôtel", icon: "bed-outline" },
+      { time: "18:00", activity: "Dîner de bienvenue", icon: "restaurant-outline" }
+    ],
+    status: 'past',
+    memories: {
+      photos: [
+        "https://images.unsplash.com/photo-1518183261945-b0989cfb3723",
+        "https://images.unsplash.com/photo-1589308454676-21b1aa8b8c1c"
+      ],
+      notes: "Super première journée au Costa Rica ! L'hôtel est magnifique et le dîner était délicieux."
+    }
   },
   {
     coordinate: {
-      latitude: 40.4168,
-      longitude: -3.7038
+      latitude: 10.4627,
+      longitude: -84.7034
     },
-    name: "Madrid",
+    name: "Arenal",
     date: "16 Mars 2024",
-    imageUrl: "https://images.unsplash.com/photo-1543783207-ec64e4d95325",
-    description: "Première escale à Madrid. Visite du Palais Royal et dégustation de tapas en famille."
+    imageUrl: "https://images.unsplash.com/photo-1589820296156-2454bb8a6ad1",
+    description: "Direction le parc national de l'Arenal ! Découverte du volcan et des sources chaudes en famille.",
+    program: [
+      { time: "09:00", activity: "Randonnée au volcan", icon: "walk-outline" },
+      { time: "12:30", activity: "Pique-nique tropical", icon: "restaurant-outline" },
+      { time: "15:00", activity: "Sources chaudes", icon: "water-outline" }
+    ],
+    status: 'current',
+    memories: {
+      photos: [],
+      notes: ""
+    }
   },
   {
     coordinate: {
-      latitude: 36.7213,
-      longitude: -4.4217
+      latitude: 9.3920,
+      longitude: -84.1307
     },
-    name: "Malaga",
+    name: "Manuel Antonio",
     date: "18 Mars 2024",
-    imageUrl: "https://images.unsplash.com/photo-1562677735-6b0b0b5b346b",
-    description: "Arrivée à Malaga. Installation à l'hôtel et première baignade dans la Méditerranée !"
+    imageUrl: "https://images.unsplash.com/photo-1589308454676-21b1aa8b8c1c",
+    description: "Parc national de Manuel Antonio : plages paradisiaques, singes capucins et activités pour toute la famille !",
+    program: [
+      { time: "08:00", activity: "Visite du parc national", icon: "leaf-outline" },
+      { time: "11:00", activity: "Plage et baignade", icon: "sunny-outline" },
+      { time: "15:00", activity: "Observation des singes", icon: "eye-outline" }
+    ],
+    status: 'upcoming'
+  },
+  {
+    coordinate: {
+      latitude: 10.2993,
+      longitude: -85.8371
+    },
+    name: "Tamarindo",
+    date: "20 Mars 2024",
+    imageUrl: "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5",
+    description: "Détente à Tamarindo : surf pour les plus grands, jeux de plage pour les petits et coucher de soleil pour tous !",
+    program: [
+      { time: "10:00", activity: "Cours de surf en famille", icon: "boat-outline" },
+      { time: "13:00", activity: "Déjeuner sur la plage", icon: "restaurant-outline" },
+      { time: "16:00", activity: "Balade en bateau", icon: "compass-outline" }
+    ],
+    status: 'upcoming'
   }
 ];
 
 const INITIAL_REGION = {
-  latitude: 43.0,
-  longitude: -3.0,
-  latitudeDelta: 20,
-  longitudeDelta: 20,
+  latitude: 9.7489,
+  longitude: -83.7534,
+  latitudeDelta: 3,
+  longitudeDelta: 3,
 };
 
 export default function CurrentTripDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { trip } = route.params || {};
-  const [focusedStepIndex, setFocusedStepIndex] = useState(0);
+  
+  // Trouver l'index du jour en cours
+  const currentDayIndex = MOCK_TRIP_STEPS.findIndex(step => step.status === 'current');
+  
+  const [focusedStepIndex, setFocusedStepIndex] = useState(currentDayIndex);
   const flatListRef = useRef(null);
 
   const renderStepCard = ({ item, index }) => (
     <View style={[
       styles.stepCard,
-      index === focusedStepIndex && styles.stepCardFocused
+      index === focusedStepIndex && styles.stepCardFocused,
+      item.status === 'past' && styles.stepCardPast,
+      item.status === 'current' && styles.stepCardCurrent,
+      item.status === 'upcoming' && styles.stepCardUpcoming,
     ]}>
       <View style={styles.stepHeader}>
-        <Text style={styles.stepDate}>{item.date}</Text>
-        <Text style={styles.stepName}>{item.name}</Text>
+        <Text style={[
+          styles.stepDate,
+          item.status === 'past' && styles.stepDatePast,
+          item.status === 'current' && styles.stepDateCurrent,
+        ]}>{item.date}</Text>
+        <Text style={[
+          styles.stepName,
+          item.status === 'past' && styles.stepNamePast,
+          item.status === 'current' && styles.stepNameCurrent,
+        ]}>{item.name}</Text>
       </View>
       
       <Image 
@@ -88,21 +148,63 @@ export default function CurrentTripDetailScreen() {
       <Text style={styles.stepDescription}>{item.description}</Text>
 
       {/* Programme du jour */}
-      <View style={styles.dayProgram}>
+      <View style={[
+        styles.dayProgram,
+        item.status === 'past' && styles.dayProgramPast,
+        item.status === 'current' && styles.dayProgramCurrent,
+      ]}>
         <Text style={styles.dayProgramTitle}>Programme du jour</Text>
-        <View style={styles.dayProgramItem}>
-          <Ionicons name="time-outline" size={16} color={theme.colors.primary} />
-          <Text style={styles.dayProgramText}>10:00 - Visite guidée</Text>
-        </View>
-        <View style={styles.dayProgramItem}>
-          <Ionicons name="restaurant-outline" size={16} color={theme.colors.primary} />
-          <Text style={styles.dayProgramText}>12:30 - Déjeuner local</Text>
-        </View>
-        <View style={styles.dayProgramItem}>
-          <Ionicons name="sunny-outline" size={16} color={theme.colors.primary} />
-          <Text style={styles.dayProgramText}>14:00 - Temps libre</Text>
-        </View>
+        {item.program.map((activity, idx) => (
+          <View key={idx} style={styles.dayProgramItem}>
+            <Ionicons name={activity.icon} size={16} color={theme.colors.primary} />
+            <Text style={styles.dayProgramText}>{activity.time} - {activity.activity}</Text>
+          </View>
+        ))}
       </View>
+
+      {/* Bouton d'ajout de souvenirs pour les jours passés et en cours */}
+      {(item.status === 'past' || item.status === 'current') && (
+        <TouchableOpacity 
+          style={styles.addMemoriesButton}
+          onPress={() => {
+            // TODO: Implémenter l'ajout de souvenirs
+            console.log('Ajouter des souvenirs pour le jour:', item.name);
+          }}
+        >
+          <Ionicons 
+            name={item.memories?.photos.length > 0 ? "images" : "add-circle"} 
+            size={24} 
+            color={theme.colors.primary} 
+          />
+          <Text style={styles.addMemoriesText}>
+            {item.memories?.photos.length > 0 
+              ? `${item.memories.photos.length} photos ajoutées` 
+              : "Ajouter des souvenirs"}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Affichage des souvenirs si existants */}
+      {item.status === 'past' && item.memories?.photos.length > 0 && (
+        <View style={styles.memoriesContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.memoriesScroll}
+          >
+            {item.memories.photos.map((photo, photoIndex) => (
+              <Image 
+                key={photoIndex}
+                source={{ uri: photo }} 
+                style={styles.memoryPhoto}
+              />
+            ))}
+          </ScrollView>
+          {item.memories.notes && (
+            <Text style={styles.memoryNotes}>{item.memories.notes}</Text>
+          )}
+        </View>
+      )}
     </View>
   );
 
@@ -186,7 +288,7 @@ export default function CurrentTripDetailScreen() {
               );
               onStepChange(newIndex);
             }}
-            initialScrollIndex={MOCK_TRIP_STEPS.length - 1}
+            initialScrollIndex={currentDayIndex}
           />
         </View>
 
@@ -291,6 +393,18 @@ const styles = StyleSheet.create({
     elevation: 5,
     transform: [{ scale: 1.02 }],
   },
+  stepCardPast: {
+    opacity: 0.8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#8E8E93',
+  },
+  stepCardCurrent: {
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+  },
+  stepCardUpcoming: {
+    opacity: 0.9,
+  },
   stepHeader: {
     marginBottom: 8,
     flexDirection: 'row',
@@ -302,10 +416,24 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontWeight: '600',
   },
+  stepDatePast: {
+    color: '#8E8E93',
+  },
+  stepDateCurrent: {
+    color: theme.colors.primary,
+    fontWeight: '700',
+  },
   stepName: {
     fontSize: 18,
     fontWeight: '700',
     color: '#333',
+  },
+  stepNamePast: {
+    color: '#8E8E93',
+  },
+  stepNameCurrent: {
+    color: '#000',
+    fontWeight: '800',
   },
   stepImage: {
     width: '100%',
@@ -339,6 +467,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginLeft: 6,
+  },
+  dayProgramPast: {
+    backgroundColor: '#F2F2F7',
+  },
+  dayProgramCurrent: {
+    backgroundColor: '#E8F3F0',
   },
   section: {
     marginTop: 24,
