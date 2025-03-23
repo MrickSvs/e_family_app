@@ -206,6 +206,8 @@ const validateMember = (req, res, next) => {
 // Route publique pour récupérer les informations de la famille par device_id
 router.get('/by-device/:device_id', async (req, res) => {
     try {
+        console.log("📥 Requête reçue pour device_id:", req.params.device_id);
+        
         // Récupérer les informations de base de la famille et ses préférences
         const familyResult = await pool.query(`
             SELECT f.*, fp.travel_type, fp.budget 
@@ -215,53 +217,53 @@ router.get('/by-device/:device_id', async (req, res) => {
         `, [req.params.device_id]);
 
         if (familyResult.rows.length === 0) {
+            console.log("❌ Famille non trouvée pour device_id:", req.params.device_id);
             return res.status(404).json({ 
                 success: false, 
                 message: "Famille non trouvée" 
             });
         }
 
+        console.log("✅ Famille trouvée:", familyResult.rows[0]);
+
         // Récupérer les membres de la famille
         const membersResult = await pool.query(`
-            SELECT * FROM family_members
+            SELECT 
+                id,
+                first_name,
+                last_name,
+                role,
+                birth_date
+            FROM family_members
             WHERE family_id = $1
             ORDER BY role DESC, birth_date DESC
         `, [familyResult.rows[0].id]);
 
+        console.log("✅ Membres trouvés:", membersResult.rows);
+
         const family = familyResult.rows[0];
         const members = membersResult.rows;
 
-        // Calculer les statistiques de la famille
-        const adults = members.filter(m => m.role === 'Adulte').length;
-        const children = members.filter(m => m.role === 'Enfant');
-        const childrenAges = children.map(child => {
-            if (child.birth_date) {
-                const birthDate = new Date(child.birth_date);
-                const today = new Date();
-                const age = today.getFullYear() - birthDate.getFullYear();
-                // Ajuster l'âge si l'anniversaire n'est pas encore passé cette année
-                if (today.getMonth() < birthDate.getMonth() || 
-                    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
-                    return age - 1;
-                }
-                return age;
-            }
-            return null;
-        }).filter(age => age !== null);
-
-        res.json({
+        const response = {
             success: true,
             data: {
-                familyName: family.family_name,
-                adults,
-                children: children.length,
-                ages: childrenAges,
-                members,
-                device_id: family.device_id,
-                travel_type: family.travel_type || [],
-                budget: family.budget || "Non spécifié"
+                family_name: family.family_name,
+                members: members.map(member => ({
+                    id: member.id,
+                    first_name: member.first_name,
+                    last_name: member.last_name,
+                    role: member.role,
+                    birth_date: member.birth_date
+                })),
+                travel_preferences: {
+                    travel_type: family.travel_type || [],
+                    budget: family.budget || "Non spécifié"
+                }
             }
-        });
+        };
+
+        console.log("📤 Réponse envoyée:", response);
+        res.json(response);
     } catch (error) {
         console.error("❌ [getFamilyInfo] Erreur:", error);
         res.status(500).json({ 

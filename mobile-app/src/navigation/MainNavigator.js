@@ -2,7 +2,8 @@ import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import FamilyTripsScreen from "../screens/FamilyTripsScreen";
 import MyTripsScreen from "../screens/MyTripsScreen";
-import AssistanceScreen from "../screens/AssistanceScreen";
+import MessagerieScreen from "../screens/MessagerieScreen";
+import ConversationDetailScreen from "../screens/ConversationDetailScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import FamilyProfileScreen from "../screens/FamilyProfileScreen";
 import UpcomingTripDetailScreen from "../screens/UpcomingTripDetailScreen";
@@ -30,9 +31,18 @@ export default function MainNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen 
-        name="AssistanceScreen" 
-        component={AssistanceScreen}
+        name="MessagerieScreen" 
+        component={MessagerieScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="ConversationDetail" 
+        component={ConversationDetailScreen}
+        options={({ route }) => ({
+          headerShown: true,
+          title: route.params.title,
+          headerBackTitle: 'Retour'
+        })}
       />
       <Stack.Screen 
         name="ProfileScreen" 

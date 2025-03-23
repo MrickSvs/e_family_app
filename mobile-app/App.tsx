@@ -16,7 +16,8 @@ import Step6Summary from './src/screens/Onboarding/Step6Summary';
 // Écrans principaux
 import FamilyTripsScreen from './src/screens/FamilyTripsScreen';
 import MyTripsScreen from './src/screens/MyTripsScreen';
-import AssistanceScreen from './src/screens/AssistanceScreen';
+import MessagerieScreen from './src/screens/MessagerieScreen';
+import ConversationDetailScreen from './src/screens/ConversationDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import UpcomingTripDetailScreen from './src/screens/UpcomingTripDetailScreen';
 import PastTripDetailScreen from './src/screens/PastTripDetailScreen';
@@ -80,8 +81,8 @@ function MainNavigator() {
             iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'MyTrips') {
             iconName = focused ? 'calendar' : 'calendar-outline';
-          } else if (route.name === 'Assistance') {
-            iconName = focused ? 'help-circle' : 'help-circle-outline';
+          } else if (route.name === 'Messagerie') {
+            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person-circle' : 'person-circle-outline';
           }
@@ -102,9 +103,9 @@ function MainNavigator() {
         options={{ tabBarLabel: 'Mes Voyages' }}
       />
       <Tab.Screen 
-        name="Assistance" 
-        component={AssistanceScreen}
-        options={{ tabBarLabel: 'Assistance' }}
+        name="Messagerie" 
+        component={MessagerieScreen}
+        options={{ tabBarLabel: 'Messagerie' }}
       />
       <Tab.Screen 
         name="Profile" 
