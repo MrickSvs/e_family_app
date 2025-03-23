@@ -70,5 +70,9 @@
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Nous avons besoin de votre localisation pour afficher votre position sur la carte pendant votre voyage.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Nous avons besoin de votre localisation pour suivre votre parcours et afficher votre position sur la carte pendant votre voyage.</string>
   </dict>
 </plist>
