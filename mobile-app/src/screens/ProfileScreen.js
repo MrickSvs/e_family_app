@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, View, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Text, ActivityIndicator } from "react-native";
+import { SafeAreaView, View, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Text, ActivityIndicator, Dimensions } from "react-native";
 import { useNavigation, CommonActions } from "@react-navigation/native";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getProfile } from '../services/profileService';
 import { theme } from "../styles/theme";
+
+const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
@@ -12,6 +14,12 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
+  const [preferences, setPreferences] = useState({
+    travelStyle: 'moderate',
+    accommodationType: 'comfort',
+    activities: ['nature', 'culture'],
+    pace: 'balanced',
+  });
 
   useEffect(() => {
     loadProfile();
@@ -84,6 +92,128 @@ export default function ProfileScreen() {
       });
   };
 
+  const renderPreferenceSection = () => (
+    <View style={styles.preferenceSection}>
+      <Text style={styles.sectionTitle}>Préférences de voyage</Text>
+      
+      {/* Style de voyage */}
+      <View style={styles.preferenceItem}>
+        <Text style={styles.preferenceLabel}>Style de voyage</Text>
+        <View style={styles.preferenceOptions}>
+          {['budget', 'moderate', 'luxury'].map((style) => (
+            <TouchableOpacity
+              key={style}
+              style={[
+                styles.preferenceOption,
+                preferences.travelStyle === style && styles.preferenceOptionSelected,
+              ]}
+              onPress={() => setPreferences({ ...preferences, travelStyle: style })}
+            >
+              <Text style={[
+                styles.preferenceOptionText,
+                preferences.travelStyle === style && styles.preferenceOptionTextSelected,
+              ]}>
+                {style === 'budget' ? 'Budget' : style === 'moderate' ? 'Modéré' : 'Luxe'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Type d'hébergement */}
+      <View style={styles.preferenceItem}>
+        <Text style={styles.preferenceLabel}>Type d'hébergement</Text>
+        <View style={styles.preferenceOptions}>
+          {['basic', 'comfort', 'luxury'].map((type) => (
+            <TouchableOpacity
+              key={type}
+              style={[
+                styles.preferenceOption,
+                preferences.accommodationType === type && styles.preferenceOptionSelected,
+              ]}
+              onPress={() => setPreferences({ ...preferences, accommodationType: type })}
+            >
+              <Text style={[
+                styles.preferenceOptionText,
+                preferences.accommodationType === type && styles.preferenceOptionTextSelected,
+              ]}>
+                {type === 'basic' ? 'Simple' : type === 'comfort' ? 'Confort' : 'Luxe'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Activités préférées */}
+      <View style={styles.preferenceItem}>
+        <Text style={styles.preferenceLabel}>Activités préférées</Text>
+        <View style={styles.activitiesGrid}>
+          {['nature', 'culture', 'adventure', 'relaxation'].map((activity) => (
+            <TouchableOpacity
+              key={activity}
+              style={[
+                styles.activityOption,
+                preferences.activities.includes(activity) && styles.activityOptionSelected,
+              ]}
+              onPress={() => {
+                const newActivities = preferences.activities.includes(activity)
+                  ? preferences.activities.filter(a => a !== activity)
+                  : [...preferences.activities, activity];
+                setPreferences({ ...preferences, activities: newActivities });
+              }}
+            >
+              <Ionicons
+                name={
+                  activity === 'nature' ? 'leaf-outline' :
+                  activity === 'culture' ? 'museum-outline' :
+                  activity === 'adventure' ? 'compass-outline' :
+                  'sunny-outline'
+                }
+                size={24}
+                color={preferences.activities.includes(activity) ? '#fff' : theme.colors.primary}
+              />
+              <Text style={[
+                styles.activityOptionText,
+                preferences.activities.includes(activity) && styles.activityOptionTextSelected,
+              ]}>
+                {activity === 'nature' ? 'Nature' :
+                 activity === 'culture' ? 'Culture' :
+                 activity === 'adventure' ? 'Aventure' :
+                 'Détente'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Rythme de voyage */}
+      <View style={styles.preferenceItem}>
+        <Text style={styles.preferenceLabel}>Rythme de voyage</Text>
+        <View style={styles.preferenceOptions}>
+          {['relaxed', 'balanced', 'intensive'].map((pace) => (
+            <TouchableOpacity
+              key={pace}
+              style={[
+                styles.preferenceOption,
+                preferences.pace === pace && styles.preferenceOptionSelected,
+              ]}
+              onPress={() => setPreferences({ ...preferences, pace })}
+            >
+              <Text style={[
+                styles.preferenceOptionText,
+                preferences.pace === pace && styles.preferenceOptionTextSelected,
+              ]}>
+                {pace === 'relaxed' ? 'Détendu' :
+                 pace === 'balanced' ? 'Équilibré' :
+                 'Intensif'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, styles.centerContainer]}>
@@ -111,114 +241,73 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Mon Profil</Text>
-          <View style={styles.yellowDot} />
-        </View>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={handleEditProfile}
-        >
-          <MaterialIcons name="edit" size={24} color={theme.colors.primary} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView 
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Section Famille */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Ma Famille</Text>
-            <Text style={styles.sectionSubtitle}>
-              {profile?.members?.length || 0} membre{profile?.members?.length > 1 ? 's' : ''}
-            </Text>
+      <ScrollView style={styles.scrollView}>
+        {/* En-tête avec photo de profil */}
+        <View style={styles.header}>
+          <View style={styles.profileImageContainer}>
+            <Image
+              source={{ uri: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=1000&auto=format&fit=crop' }}
+              style={styles.profileImage}
+            />
+            <TouchableOpacity style={styles.editImageButton}>
+              <Ionicons name="camera" size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
-
-          <View style={styles.familyCard}>
-            <View style={styles.familyInfo}>
-              <Text style={styles.familyName}>{profile?.family_name || 'Ma Famille'}</Text>
-              <Text style={styles.familyComposition}>
-                {adults} adulte{adults > 1 ? 's' : ''}, {children} enfant{children > 1 ? 's' : ''}
-              </Text>
-              <Text style={styles.familyAges}>
-                Âges des enfants : {childrenAges.length > 0 ? childrenAges.join(', ') : 'Non renseigné'}
-              </Text>
-            </View>
-          </View>
+          <Text style={styles.name}>{profile?.family_name || 'Ma Famille'}</Text>
+          <Text style={styles.subtitle}>{adults} adulte{adults > 1 ? 's' : ''} • {children} enfant{children > 1 ? 's' : ''}</Text>
         </View>
 
-        {/* Section Préférences */}
-        <View style={styles.section}>
+        {/* Section des préférences */}
+        {renderPreferenceSection()}
+
+        {/* Section Membres de la famille */}
+        <View style={styles.familySection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Préférences de Voyage</Text>
+            <Text style={styles.sectionTitle}>Membres de la famille</Text>
+            <TouchableOpacity 
+              style={styles.addMemberButton}
+              onPress={() => handleEditMember()}
+            >
+              <Ionicons name="add-circle" size={24} color={theme.colors.primary} />
+              <Text style={styles.addMemberText}>Ajouter</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.preferencesContainer}>
-            <View style={styles.preferenceItem}>
-              <Ionicons name="wallet-outline" size={24} color={theme.colors.primary} />
-              <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceLabel}>Budget</Text>
-                <Text style={styles.preferenceValue}>
-                  {profile?.travel_preferences?.budget || 'Non renseigné'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.preferenceItem}>
-              <Ionicons name="airplane-outline" size={24} color={theme.colors.primary} />
-              <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceLabel}>Type de voyage</Text>
-                <Text style={styles.preferenceValue}>
-                  {profile?.travel_preferences?.travel_type?.join(', ') || 'Non renseigné'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.preferenceItem}>
-              <Ionicons name="calendar-outline" size={24} color={theme.colors.primary} />
-              <View style={styles.preferenceContent}>
-                <Text style={styles.preferenceLabel}>Durée préférée</Text>
-                <Text style={styles.preferenceValue}>
-                  {profile?.travel_preferences?.preferred_duration || 'Non renseigné'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Section Membres */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Membres de la Famille</Text>
-          </View>
-
-          {profile?.members?.map((member, index) => (
+          {profile?.members?.map((member) => (
             <TouchableOpacity
               key={member.id}
               style={styles.memberCard}
               onPress={() => handleEditMember(member.id)}
             >
               <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>
-                  {member.first_name} {member.last_name}
-                </Text>
+                <View style={styles.memberAvatar}>
+                  <Text style={styles.memberInitials}>
+                    {member.first_name?.[0]}{member.last_name?.[0]}
+                  </Text>
+                </View>
                 <View style={styles.memberDetails}>
-                  <Text style={styles.memberRole}>{member.role}</Text>
-                  {member.birth_date && (
-                    <Text style={styles.memberAge}>
-                      • {new Date(member.birth_date).toLocaleDateString()}
-                    </Text>
-                  )}
+                  <Text style={styles.memberName}>
+                    {member.first_name} {member.last_name}
+                  </Text>
+                  <View style={styles.memberMeta}>
+                    <Text style={styles.memberRole}>{member.role}</Text>
+                    {member.birth_date && (
+                      <Text style={styles.memberAge}>
+                        • {Math.floor((new Date() - new Date(member.birth_date)) / (1000 * 60 * 60 * 24 * 365.25))} ans
+                      </Text>
+                    )}
+                  </View>
                 </View>
               </View>
-              <MaterialIcons name="chevron-right" size={24} color="#666" />
+              <Ionicons name="chevron-forward" size={24} color="#666" />
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Bouton de sauvegarde */}
+        <TouchableOpacity style={styles.saveButton}>
+          <Text style={styles.saveButtonText}>Enregistrer les modifications</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -229,161 +318,131 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F5ED',
   },
-  centerContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  scrollView: {
+    flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    padding: 20,
     backgroundColor: '#F7F5ED',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    marginBottom: 16,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  profileImageContainer: {
+    position: 'relative',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  title: {
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+  editImageButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#F7F5ED',
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+  },
+  name: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 4,
   },
-  yellowDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.secondary,
-    marginLeft: 12,
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    opacity: 0.8,
   },
-  editButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  section: {
-    marginTop: 24,
-    paddingHorizontal: 16,
-  },
-  sectionHeader: {
-    marginBottom: 16,
+  preferenceSection: {
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  familyCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  familyInfo: {
-    gap: 8,
-  },
-  familyName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  familyComposition: {
-    fontSize: 16,
-    color: '#666',
-  },
-  familyAges: {
-    fontSize: 14,
-    color: '#666',
-  },
-  preferencesContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    marginBottom: 20,
   },
   preferenceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-  },
-  preferenceContent: {
-    marginLeft: 16,
-    flex: 1,
+    marginBottom: 24,
   },
   preferenceLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  preferenceValue: {
     fontSize: 16,
+    fontWeight: '600',
     color: '#333',
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  memberCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  memberInfo: {
-    flex: 1,
-  },
-  memberName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  memberDetails: {
+  preferenceOptions: {
     flexDirection: 'row',
+    gap: 8,
+  },
+  preferenceOption: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
     alignItems: 'center',
-    marginTop: 4,
   },
-  memberRole: {
-    fontSize: 14,
-    color: '#666',
+  preferenceOptionSelected: {
+    backgroundColor: theme.colors.primary,
   },
-  memberAge: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
+  preferenceOptionText: {
+    color: theme.colors.primary,
+    fontWeight: '500',
+  },
+  preferenceOptionTextSelected: {
+    color: '#fff',
+  },
+  activitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  activityOption: {
+    width: (width - 56) / 2,
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    alignItems: 'center',
+    gap: 8,
+  },
+  activityOptionSelected: {
+    backgroundColor: theme.colors.primary,
+  },
+  activityOptionText: {
+    color: theme.colors.primary,
+    fontWeight: '500',
+  },
+  activityOptionTextSelected: {
+    color: '#fff',
+  },
+  saveButton: {
+    backgroundColor: theme.colors.primary,
+    margin: 16,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  centerContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorText: {
     fontSize: 16,
@@ -401,5 +460,79 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  familySection: {
+    padding: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  addMemberButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  addMemberText: {
+    color: theme.colors.primary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  memberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  memberInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  memberAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  memberInitials: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  memberDetails: {
+    flex: 1,
+  },
+  memberName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  memberMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  memberRole: {
+    fontSize: 14,
+    color: '#666',
+  },
+  memberAge: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
   },
 });
