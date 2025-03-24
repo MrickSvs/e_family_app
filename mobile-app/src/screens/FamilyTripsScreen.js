@@ -116,7 +116,7 @@ export default function FamilyTripsScreen() {
       type: "Aventure & culture",
       description:
         "Une expérience unique pour observer les Big Five dans leur habitat naturel",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/07/27/57adf10e-50de-47b2-b07d-02d0d1ab8167.jpg",
+      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2024/08/28/9cea9434-1cec-45c4-81af-c30b87cba72f.jpg",
       tags: ["Safari", "Aventure"],
       price: 3290,
     },
@@ -127,7 +127,7 @@ export default function FamilyTripsScreen() {
       type: "Culture & détente",
       description:
         "Un rythme adapté, des découvertes culturelles et une gastronomie accessible à tous",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/07/27/57adf10e-50de-47b2-b07d-02d0d1ab8167.jpg",
+      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2023/06/19/e389cda8-ad5f-4145-8517-f7d76c636b19.jpg",
       tags: ["Culture", "Gastronomie"],
       price: 1590,
     },

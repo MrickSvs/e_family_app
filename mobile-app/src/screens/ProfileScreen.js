@@ -316,7 +316,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F5ED',
+    backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#F7F5ED',
+    backgroundColor: '#fff',
     marginBottom: 16,
   },
   profileImageContainer: {

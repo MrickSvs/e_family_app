@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import ConversationList from '../components/ConversationList';
-import ConversationDetail from '../components/ConversationDetail';
 
 export default function MessagerieScreen({ navigation }) {
   const handleConversationPress = (conversation) => {
@@ -12,13 +11,19 @@ export default function MessagerieScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <ConversationList onConversationPress={handleConversationPress} />
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <ConversationList onConversationPress={handleConversationPress} />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',

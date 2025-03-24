@@ -107,6 +107,20 @@ export default function PendingQuoteDetailScreen() {
           </View>
         </View>
 
+        {/* Section : Dernier devis */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.lastQuoteCard}>
+            <View style={styles.lastQuoteContent}>
+              <Ionicons name="document-text-outline" size={24} color="#0f8066" />
+              <View style={styles.lastQuoteText}>
+                <Text style={styles.lastQuoteTitle}>Dernier devis</Text>
+                <Text style={styles.lastQuoteSubtitle}>Circuit Vietnam - 2023</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
+
         {/* Section : Détails du voyage */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Détails du voyage</Text>
@@ -139,27 +153,6 @@ export default function PendingQuoteDetailScreen() {
           </View>
         </View>
 
-        {/* Section : Messages */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Messages avec l'agence</Text>
-          {messages.map((message) => (
-            <View 
-              key={message.id} 
-              style={[
-                styles.messageCard,
-                message.type === "user" ? styles.userMessage : styles.agencyMessage
-              ]}
-            >
-              <Text style={styles.messageContent}>{message.content}</Text>
-              <Text style={styles.messageDate}>{message.date}</Text>
-            </View>
-          ))}
-          <TouchableOpacity style={styles.addMessageButton}>
-            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
-            <Text style={styles.addMessageText}>Envoyer un message</Text>
-          </TouchableOpacity>
-        </View>
-
         <AgencyBlock 
           agency={{
             name: "L'agence de Virginie",
@@ -173,6 +166,19 @@ export default function PendingQuoteDetailScreen() {
             location: "Espagne"
           }}
         />
+
+        {/* Bouton de contact */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.contactButton}
+            onPress={() => navigation.navigate('Main', {
+              screen: 'MessagerieScreen'
+            })}
+          >
+            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
+            <Text style={styles.contactButtonText}>Contacter l'agence</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -296,17 +302,19 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   agencyMessage: {
-    backgroundColor: "#F7F5ED",
+    backgroundColor: "#fff",
     alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
   },
   messageContent: {
     fontSize: 14,
-    color: "#fff",
+    color: "#333",
     marginBottom: 4,
   },
   messageDate: {
     fontSize: 12,
-    color: "#rgba(255,255,255,0.7)",
+    color: "#666",
   },
   addMessageButton: {
     flexDirection: "row",
@@ -327,5 +335,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     fontWeight: "bold",
+  },
+  lastQuoteCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F7F5ED",
+    padding: 16,
+    borderRadius: 8,
+  },
+  lastQuoteContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  lastQuoteText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  lastQuoteTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  lastQuoteSubtitle: {
+    fontSize: 14,
+    color: "#666",
+  },
+  contactButton: {
+    backgroundColor: '#0f8066',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  contactButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 }); 

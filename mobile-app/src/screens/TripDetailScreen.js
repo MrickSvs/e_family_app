@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   SafeAreaView,
   View,
@@ -13,6 +13,9 @@ import {
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { TripMap } from "../components/TripMap";
+import { LocalTips } from "../components/LocalTips";
+import { FlightPrices } from "../components/FlightPrices";
 import AgencyBlock from "../components/AgencyBlock";
 import CreateTripModal from "../components/CreateTripModal";
 import { getProfile } from "../services/profileService";
@@ -30,7 +33,7 @@ export default function TripDetailScreen() {
   const [showCreateTripModal, setShowCreateTripModal] = useState(false);
   const [familyMembers, setFamilyMembers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const scrollY = new Animated.Value(0);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, HERO_HEIGHT - HEADER_HEIGHT],
@@ -81,11 +84,103 @@ export default function TripDetailScreen() {
       <View style={styles.heroContent}>
         <Text style={styles.title}>{trip.title}</Text>
         <View style={styles.mainInfo}>
-          <Text style={styles.duration}>{trip.duration}</Text>
-          <Text style={styles.type}>{trip.type}</Text>
+          <View style={styles.infoItem}>
+            <Ionicons name="time-outline" size={20} color="#fff" />
+            <Text style={styles.infoText}>{trip.duration}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Ionicons name="calendar-outline" size={20} color="#fff" />
+            <Text style={styles.infoText}>{trip.recommendedPeriod}</Text>
+          </View>
         </View>
       </View>
     </Animated.View>
+  );
+
+  const renderSummarySection = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Résumé du voyage</Text>
+      <Text style={styles.description}>{trip.description}</Text>
+      <View style={styles.summaryInfo}>
+        <View style={styles.summaryItem}>
+          <Ionicons name="calendar-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.summaryLabel}>Période recommandée</Text>
+          <Text style={styles.summaryValue}>{trip.recommendedPeriod}</Text>
+        </View>
+        <View style={styles.summaryItem}>
+          <Ionicons name="map-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.summaryLabel}>Points d'intérêt</Text>
+          <Text style={styles.summaryValue}>{trip.pointsOfInterest?.length || 0}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderDetailedItinerary = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Itinéraire détaillé</Text>
+      {trip.itinerary?.map((day, index) => (
+        <TouchableOpacity 
+          key={index} 
+          style={styles.dayCard}
+          onPress={() => navigation.navigate('DayDetail', { day, trip })}
+        >
+          <View style={styles.dayHeader}>
+            <Text style={styles.dayNumber}>Jour {day.day}</Text>
+            <Text style={styles.dayTitle}>{day.title}</Text>
+            <Ionicons name="chevron-forward" size={24} color={theme.colors.primary} />
+          </View>
+          <View style={styles.dayContent}>
+            {day.steps?.slice(0, 3).map((step, stepIndex) => (
+              <View key={stepIndex} style={styles.stepItem}>
+                <Ionicons name="time-outline" size={16} color="#666" />
+                <Text style={styles.stepText}>{step}</Text>
+              </View>
+            ))}
+            {day.steps?.length > 3 && (
+              <Text style={styles.moreSteps}>+ {day.steps.length - 3} autres activités</Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderInteractiveMap = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Carte interactive</Text>
+      <TripMap itinerary={trip.itinerary} />
+      <TouchableOpacity 
+        style={styles.mapButton}
+        onPress={() => navigation.navigate('FullMap', { itinerary: trip.itinerary })}
+      >
+        <Ionicons name="expand-outline" size={24} color="#fff" />
+        <Text style={styles.mapButtonText}>Voir la carte complète</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderPracticalInfo = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Informations pratiques</Text>
+      <View style={styles.practicalInfoGrid}>
+        <View style={styles.practicalInfoItem}>
+          <Ionicons name="bed-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.practicalInfoLabel}>Hébergement</Text>
+          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.accommodation}</Text>
+        </View>
+        <View style={styles.practicalInfoItem}>
+          <Ionicons name="restaurant-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.practicalInfoLabel}>Repas</Text>
+          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.meals}</Text>
+        </View>
+        <View style={styles.practicalInfoItem}>
+          <Ionicons name="bus-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.practicalInfoLabel}>Transport</Text>
+          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.transport}</Text>
+        </View>
+      </View>
+    </View>
   );
 
   const renderUpcomingTripDetails = () => (
@@ -93,106 +188,18 @@ export default function TripDetailScreen() {
       {renderHeroSection()}
       
       <View style={styles.contentContainer}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.priceLabel}>À partir de</Text>
-          <Text style={styles.price}>{trip.price}€</Text>
-          <Text style={styles.priceDetails}>par personne</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>À propos de ce voyage</Text>
-          <Text style={styles.description}>{trip.description}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Points forts</Text>
-          <View style={styles.highlightsContainer}>
-            {trip.tags?.map((tag, index) => (
-              <View key={index} style={styles.highlightItem}>
-                <Text style={styles.highlightText}>{tag}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Photos du voyage</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.photoGallery}
-            snapToInterval={width - 32}
-            decelerationRate="fast"
-          >
-            {trip.photos?.map((photo, index) => (
-              <Image
-                key={index}
-                source={{ uri: photo }}
-                style={styles.photoImage}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Points d'intérêt</Text>
-          <View style={styles.pointsOfInterestContainer}>
-            {trip.pointsOfInterest?.map((point, index) => (
-              <View key={index} style={styles.pointOfInterestItem}>
-                <View style={styles.pointOfInterestHeader}>
-                  <Text style={styles.pointOfInterestTitle}>{point.title}</Text>
-                  {point.duration && (
-                    <Text style={styles.pointOfInterestDuration}>{point.duration}</Text>
-                  )}
-                </View>
-                <Text style={styles.pointOfInterestDescription}>{point.description}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {trip.practicalInfo && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Informations pratiques</Text>
-            <View style={styles.practicalInfoContainer}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Niveau de difficulté</Text>
-                <Text style={styles.infoValue}>{trip.practicalInfo.difficulty}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Transport</Text>
-                <Text style={styles.infoValue}>{trip.practicalInfo.transport}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Hébergement</Text>
-                <Text style={styles.infoValue}>{trip.practicalInfo.accommodation}</Text>
-              </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Repas</Text>
-                <Text style={styles.infoValue}>{trip.practicalInfo.meals}</Text>
-              </View>
-            </View>
-
-            <View style={styles.includedContainer}>
-              <Text style={styles.includedTitle}>Ce qui est inclus</Text>
-              {trip.practicalInfo.included.map((item, index) => (
-                <View key={index} style={styles.includedItem}>
-                  <Text style={styles.includedText}>✓ {item}</Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.includedContainer}>
-              <Text style={styles.includedTitle}>Ce qui n'est pas inclus</Text>
-              {trip.practicalInfo.notIncluded.map((item, index) => (
-                <View key={index} style={styles.includedItem}>
-                  <Text style={styles.includedText}>✗ {item}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
+        {renderSummarySection()}
+        {renderInteractiveMap()}
+        {renderDetailedItinerary()}
+        {renderPracticalInfo()}
+        <LocalTips 
+          familyProfile={trip.familyProfile}
+          destination={trip.destination}
+        />
+        <FlightPrices 
+          destination={trip.destination}
+          origin="Paris"
+        />
         <AgencyBlock 
           agency={{
             name: "L'agence de Virginie",
@@ -206,41 +213,6 @@ export default function TripDetailScreen() {
             location: "Espagne"
           }}
         />
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Jour par jour</Text>
-          <View style={styles.itineraryContainer}>
-            {trip.itinerary ? (
-              trip.itinerary.map((day, index) => (
-                <View key={index} style={styles.dayContainer}>
-                  <View style={styles.dayHeader}>
-                    <Text style={styles.dayNumber}>Jour {day.day}</Text>
-                    <Text style={styles.dayTitle}>{day.title}</Text>
-                  </View>
-                  <View style={styles.dayContent}>
-                    {day.steps && (
-                      <View style={styles.stepsContainer}>
-                        <Text style={styles.stepsTitle}>Étapes :</Text>
-                        {day.steps.map((step, stepIndex) => (
-                          <Text key={stepIndex} style={styles.stepText}>{step}</Text>
-                        ))}
-                      </View>
-                    )}
-                    <Text style={styles.dayDescription}>{day.description}</Text>
-                  </View>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.dayDescription}>
-                Jour 1 : Arrivée et installation{"\n"}
-                Jour 2 : Découverte des sites principaux{"\n"}
-                Jour 3 : Exploration des environs{"\n"}
-                Jour 4 : Activités locales{"\n"}
-                Jour 5 : Dernières découvertes et départ
-              </Text>
-            )}
-          </View>
-        </View>
       </View>
     </>
   );
@@ -327,7 +299,7 @@ export default function TripDetailScreen() {
             disabled={loading}
           >
             <Text style={styles.bookButtonText}>
-              {loading ? 'Chargement...' : 'Créer un voyage'}
+              {loading ? 'Chargement...' : 'Demander un devis'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -402,15 +374,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
   },
-  duration: {
-    fontSize: 16,
-    color: "#fff",
-    fontWeight: "500",
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
   },
-  type: {
+  infoText: {
+    color: '#fff',
+    marginLeft: 4,
+    fontSize: 14,
+  },
+  summaryInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  summaryItem: {
+    alignItems: 'center',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  summaryValue: {
     fontSize: 16,
-    color: "#fff",
-    fontWeight: "500",
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 2,
   },
   contentContainer: {
     backgroundColor: '#F7F5ED',
@@ -418,37 +416,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     marginTop: -24,
     paddingTop: 24,
-  },
-  priceContainer: {
-    backgroundColor: "#fff",
-    marginHorizontal: 16,
-    padding: 16,
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  priceLabel: {
-    fontSize: 14,
-    color: "#666",
-  },
-  price: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: theme.colors.primary,
-  },
-  priceDetails: {
-    fontSize: 14,
-    color: "#666",
   },
   section: {
     padding: 24,
@@ -484,54 +451,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
-  photoGallery: {
-    marginHorizontal: -24,
-    paddingHorizontal: 24,
-  },
-  photoImage: {
-    width: width - 48,
-    height: 250,
-    marginRight: 16,
-    borderRadius: 16,
-  },
-  bottomContainer: {
-    padding: 16,
+  dayCard: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  bookButton: {
-    backgroundColor: theme.colors.primary,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: "center",
-  },
-  bookButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  dayContainer: {
-    marginBottom: 24,
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
+    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    overflow: 'hidden',
+    borderColor: '#eee',
   },
   dayHeader: {
-    backgroundColor: '#F7F5ED',
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: '#eee',
   },
   dayNumber: {
     fontSize: 16,
@@ -547,57 +479,59 @@ const styles = StyleSheet.create({
   dayContent: {
     padding: 16,
   },
-  dayDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-    marginTop: 12,
-  },
-  stepsContainer: {
-    marginBottom: 12,
-  },
-  stepsTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
+  stepItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
   stepText: {
+    marginLeft: 8,
     fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
-    marginBottom: 4,
+    color: '#666',
+    flex: 1,
   },
-  practicalInfoContainer: {
-    gap: 12,
-  },
-  infoItem: {
-    marginBottom: 8,
-  },
-  infoLabel: {
+  moreSteps: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 2,
+    color: theme.colors.primary,
+    marginTop: 8,
+    textAlign: 'right',
   },
-  infoValue: {
+  mapButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  mapButtonText: {
+    color: '#fff',
     fontSize: 16,
-    color: "#333",
+    fontWeight: '600',
+    marginLeft: 8,
   },
-  includedContainer: {
-    marginTop: 16,
+  practicalInfoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  includedTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
+  practicalInfoItem: {
+    width: '48%',
+    backgroundColor: '#f8f8f8',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
   },
-  includedItem: {
-    marginBottom: 4,
-  },
-  includedText: {
+  practicalInfoLabel: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
+    marginTop: 8,
+  },
+  practicalInfoValue: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 4,
   },
   galleryImage: {
     width: 200,
@@ -627,35 +561,29 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginRight: 4,
   },
-  pointsOfInterestContainer: {
-    gap: 16,
-  },
-  pointOfInterestItem: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
+  bottomContainer: {
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  pointOfInterestHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+  bookButton: {
+    backgroundColor: theme.colors.primary,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: "center",
   },
-  pointOfInterestTitle: {
+  bookButtonText: {
+    color: "#fff",
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
-  },
-  pointOfInterestDuration: {
-    fontSize: 14,
-    color: theme.colors.primary,
-    fontWeight: "500",
-  },
-  pointOfInterestDescription: {
-    fontSize: 14,
-    color: "#666",
-    lineHeight: 20,
   },
 }); 

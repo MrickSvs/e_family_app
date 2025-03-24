@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const mockConversations = [
   {
@@ -32,28 +33,37 @@ const mockConversations = [
 ];
 
 const ConversationItem = ({ item, onPress }) => (
-  <TouchableOpacity style={styles.conversationItem} onPress={onPress}>
+  <TouchableOpacity 
+    style={styles.conversationItem} 
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
     <View style={styles.avatarContainer}>
       <Image
         source={{ uri: 'https://via.placeholder.com/40' }}
         style={styles.avatar}
       />
+      {item.unread && <View style={styles.unreadBadge} />}
     </View>
     <View style={styles.contentContainer}>
       <View style={styles.headerRow}>
-        <Text style={styles.tripName}>{item.tripName}</Text>
+        <Text style={styles.tripName} numberOfLines={1}>{item.tripName}</Text>
         <Text style={styles.timestamp}>{item.timestamp}</Text>
       </View>
-      <Text style={styles.agentName}>{item.agentName}</Text>
+      <View style={styles.agentRow}>
+        <Ionicons name="person-circle-outline" size={16} color="#666" />
+        <Text style={styles.agentName} numberOfLines={1}>{item.agentName}</Text>
+      </View>
       <View style={styles.messageRow}>
         <Text style={styles.lastMessage} numberOfLines={1}>
           {item.lastMessage}
         </Text>
-        {item.unread && <View style={styles.unreadDot} />}
       </View>
-      <Text style={[styles.status, { color: getStatusColor(item.status) }]}>
-        {item.status}
-      </Text>
+      <View style={styles.statusContainer}>
+        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+          <Text style={styles.statusText}>{item.status}</Text>
+        </View>
+      </View>
     </View>
   </TouchableOpacity>
 );
@@ -61,17 +71,24 @@ const ConversationItem = ({ item, onPress }) => (
 const getStatusColor = (status) => {
   switch (status) {
     case 'À venir':
-      return '#2196F3';
+      return '#E3F2FD';
     case 'En cours':
-      return '#4CAF50';
+      return '#E8F5E9';
     case 'Terminé':
-      return '#9E9E9E';
+      return '#F5F5F5';
     default:
-      return '#000000';
+      return '#F5F5F5';
   }
 };
 
 export default function ConversationList({ onConversationPress }) {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredConversations = mockConversations.filter(conv => 
+    conv.tripName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.agentName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const renderItem = ({ item }) => (
     <ConversationItem
       item={item}
@@ -80,12 +97,27 @@ export default function ConversationList({ onConversationPress }) {
   );
 
   return (
-    <FlatList
-      data={mockConversations}
-      renderItem={renderItem}
-      keyExtractor={(item) => item.id}
-      style={styles.container}
-    />
+    <View style={styles.container}>
+      <View style={styles.searchWrapper}>
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher une conversation..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#999"
+          />
+        </View>
+      </View>
+      <FlatList
+        data={filteredConversations}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+      />
+    </View>
   );
 }
 
@@ -94,19 +126,59 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  searchWrapper: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    height: 44,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    height: 44,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 16,
+  },
   conversationItem: {
     flexDirection: 'row',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#F5F5F5',
   },
   avatarContainer: {
     marginRight: 12,
+    position: 'relative',
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#0f8066',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   contentContainer: {
     flex: 1,
@@ -115,39 +187,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   tripName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+    marginRight: 8,
   },
   timestamp: {
     fontSize: 12,
-    color: '#757575',
+    color: '#666',
+  },
+  agentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   agentName: {
     fontSize: 14,
-    color: '#616161',
-    marginTop: 2,
+    color: '#666',
+    marginLeft: 4,
+    flex: 1,
   },
   messageRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginBottom: 8,
   },
   lastMessage: {
     flex: 1,
     fontSize: 14,
-    color: '#757575',
+    color: '#666',
   },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#2196F3',
-    marginLeft: 8,
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  status: {
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
     fontSize: 12,
-    marginTop: 4,
+    color: '#333',
+    fontWeight: '500',
   },
 }); 
