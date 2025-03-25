@@ -16,7 +16,7 @@ const familySchema = Joi.object({
   ).min(1).required(),
   travel_preferences: Joi.object({
     travel_type: Joi.string().required().valid('Découverte', 'Aventure', 'Détente', 'Culture'),
-    budget: Joi.string().required().valid('Économique', 'Modéré', 'Confort', 'Luxe')
+    budget: Joi.string().required().valid('Économique', 'Modéré', 'Luxe')
   }).required()
 });
 
@@ -55,7 +55,7 @@ const validateFamilyUpdate = (req, res, next) => {
     ).min(1),
     travel_preferences: Joi.object({
       travel_type: Joi.string().valid('Découverte', 'Aventure', 'Détente', 'Culture'),
-      budget: Joi.string().valid('Économique', 'Modéré', 'Confort', 'Luxe')
+      budget: Joi.string().valid('Économique', 'Modéré', 'Luxe')
     })
   }).min(1); // Au moins un champ doit être fourni
 

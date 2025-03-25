@@ -19,10 +19,14 @@ function uuidv4() {
 
 // Mapping des valeurs pour l'affichage
 const TRAVEL_TYPE_DISPLAY = {
-  'RELAX': 'Détente',
-  'ADVENTURE': 'Aventure',
-  'DISCOVERY': 'Découverte',
-  'CULTURE': 'Culture'
+  'Culture': 'Culture',
+  'Nature': 'Nature',
+  'Plage': 'Plage',
+  'Sport': 'Sport',
+  'Découverte': 'Découverte',
+  'Détente': 'Détente',
+  'Aventure': 'Aventure',
+  'Non spécifié': 'Non spécifié'
 };
 
 const BUDGET_DISPLAY = {
@@ -34,10 +38,14 @@ const BUDGET_DISPLAY = {
 
 // Mapping des valeurs pour l'API
 const TRAVEL_TYPE_API = {
-  'RELAX': 'Détente',
-  'ADVENTURE': 'Aventure',
-  'DISCOVERY': 'Découverte',
-  'CULTURE': 'Culture'
+  'Culture': 'Culture',
+  'Nature': 'Nature',
+  'Plage': 'Plage',
+  'Sport': 'Sport',
+  'Découverte': 'Découverte',
+  'Détente': 'Détente',
+  'Aventure': 'Aventure',
+  'Non spécifié': 'Non spécifié'
 };
 
 const BUDGET_API = {

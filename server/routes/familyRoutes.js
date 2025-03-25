@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const familyController = require('../controllers/familyController');
+const { 
+    createFamily,
+    getFamilyById,
+    updateFamily,
+    deleteFamily,
+    getFamiliesByUser,
+    updateFamilyMember
+} = require('../controllers/familyController');
 const { auth } = require('../middleware/auth');
 const pool = require('../config/db');
 const Joi = require('joi');
@@ -30,7 +37,15 @@ const Joi = require('joi');
  *                 enum: [Découverte, Aventure, Détente, Culture]
  *             budget:
  *               type: string
- *               enum: [Économique, Modéré, Confort, Luxe]
+ *               enum: [Économique, Modéré, Luxe]
+ *             accommodation_type:
+ *               type: string
+ *               enum: [Hôtel, Appartement, Surprise]
+ *               description: Type d'hébergement préféré
+ *             travel_pace:
+ *               type: string
+ *               enum: [Relaxé, Equilibré, Actif]
+ *               description: Rythme de voyage préféré
  *     FamilyMember:
  *       type: object
  *       required:
@@ -146,7 +161,9 @@ const familySchema = Joi.object({
     interests: Joi.array().items(Joi.string()),
     travel_preferences: Joi.object({
         travel_type: Joi.array().items(Joi.string().valid('Découverte', 'Aventure', 'Détente', 'Culture')),
-        budget: Joi.string().valid('Économique', 'Modéré', 'Confort', 'Luxe')
+        budget: Joi.string().valid('Économique', 'Modéré', 'Luxe'),
+        accommodation_type: Joi.string().valid('Hôtel', 'Appartement', 'Surprise'),
+        travel_pace: Joi.string().valid('Relaxé', 'Equilibré', 'Actif')
     })
 });
 
@@ -210,7 +227,7 @@ router.get('/by-device/:device_id', async (req, res) => {
         
         // Récupérer les informations de base de la famille et ses préférences
         const familyResult = await pool.query(`
-            SELECT f.*, fp.travel_type, fp.budget 
+            SELECT f.*, fp.travel_type, fp.budget, fp.accommodation_type, fp.travel_pace 
             FROM families f
             LEFT JOIN family_preferences fp ON f.id = fp.family_id
             WHERE f.device_id = $1
@@ -257,7 +274,9 @@ router.get('/by-device/:device_id', async (req, res) => {
                 })),
                 travel_preferences: {
                     travel_type: family.travel_type || [],
-                    budget: family.budget || "Non spécifié"
+                    budget: family.budget || "Non spécifié",
+                    accommodation_type: family.accommodation_type || "Non spécifié",
+                    travel_pace: family.travel_pace || "Non spécifié"
                 }
             }
         };
@@ -314,9 +333,13 @@ router.post('/by-device/:device_id', validateFamily, async (req, res) => {
         // Ajouter les préférences de voyage si fournies
         if (travel_preferences) {
             await pool.query(
-                `INSERT INTO family_preferences (family_id, travel_type, budget)
-                 VALUES ($1, $2, $3)`,
-                [familyId, travel_preferences.travel_type, travel_preferences.budget]
+                `INSERT INTO family_preferences (family_id, travel_type, budget, accommodation_type, travel_pace)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [familyId, 
+                 travel_preferences.travel_type, 
+                 travel_preferences.budget,
+                 travel_preferences.accommodation_type,
+                 travel_preferences.travel_pace]
             );
         }
 
@@ -392,12 +415,18 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
         // Mettre à jour les préférences de voyage si fournies
         if (travel_preferences) {
             await pool.query(
-                `INSERT INTO family_preferences (family_id, travel_type, budget)
-                 VALUES ($1, $2, $3)
+                `INSERT INTO family_preferences (family_id, travel_type, budget, accommodation_type, travel_pace)
+                 VALUES ($1, $2, $3, $4, $5)
                  ON CONFLICT (family_id) DO UPDATE
                  SET travel_type = EXCLUDED.travel_type,
-                     budget = EXCLUDED.budget`,
-                [familyId, travel_preferences.travel_type, travel_preferences.budget]
+                     budget = EXCLUDED.budget,
+                     accommodation_type = EXCLUDED.accommodation_type,
+                     travel_pace = EXCLUDED.travel_pace`,
+                [familyId, 
+                 travel_preferences.travel_type, 
+                 travel_preferences.budget,
+                 travel_preferences.accommodation_type,
+                 travel_preferences.travel_pace]
             );
         }
 
@@ -515,19 +544,14 @@ router.put('/by-device/:device_id/members/:member_id', validateMember, async (re
 // Routes protégées par authentification
 router.use(auth);
 
-// Créer une nouvelle famille
-router.post('/', familyController.createFamily);
+// Routes pour les familles
+router.post('/', createFamily);
+router.get('/:id', getFamilyById);
+router.put('/:id', updateFamily);
+router.delete('/:id', deleteFamily);
+router.get('/user/families', getFamiliesByUser);
 
-// Récupérer toutes les familles de l'utilisateur connecté
-router.get('/', familyController.getFamiliesByUser);
-
-// Récupérer une famille spécifique
-router.get('/:id', familyController.getFamilyById);
-
-// Mettre à jour une famille
-router.put('/:id', familyController.updateFamily);
-
-// Supprimer une famille
-router.delete('/:id', familyController.deleteFamily);
+// Route pour mettre à jour un membre de la famille
+router.put('/families/members/:memberId', validateMember, updateFamilyMember);
 
 module.exports = router; 

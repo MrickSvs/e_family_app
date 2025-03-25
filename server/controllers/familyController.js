@@ -1,7 +1,8 @@
 const Family = require('../models/Family');
+const pool = require('../config/db');
 
 // Créer une nouvelle famille
-exports.createFamily = async (req, res) => {
+const createFamily = async (req, res) => {
   try {
     const family = new Family({
       user_id: req.user._id, // Supposant que l'authentification est en place
@@ -21,7 +22,7 @@ exports.createFamily = async (req, res) => {
 };
 
 // Récupérer une famille par ID
-exports.getFamilyById = async (req, res) => {
+const getFamilyById = async (req, res) => {
   try {
     const family = await Family.findById(req.params.id);
     if (!family) {
@@ -43,7 +44,7 @@ exports.getFamilyById = async (req, res) => {
 };
 
 // Mettre à jour une famille
-exports.updateFamily = async (req, res) => {
+const updateFamily = async (req, res) => {
   try {
     const family = await Family.findById(req.params.id);
     if (!family) {
@@ -71,7 +72,7 @@ exports.updateFamily = async (req, res) => {
 };
 
 // Supprimer une famille
-exports.deleteFamily = async (req, res) => {
+const deleteFamily = async (req, res) => {
   try {
     const family = await Family.findById(req.params.id);
     if (!family) {
@@ -94,7 +95,7 @@ exports.deleteFamily = async (req, res) => {
 };
 
 // Récupérer toutes les familles d'un utilisateur
-exports.getFamiliesByUser = async (req, res) => {
+const getFamiliesByUser = async (req, res) => {
   try {
     const families = await Family.find({ user_id: req.user._id });
     res.json(families);
@@ -104,4 +105,64 @@ exports.getFamiliesByUser = async (req, res) => {
       error: error.message
     });
   }
+};
+
+const updateFamilyMember = async (req, res) => {
+    try {
+        const { memberId } = req.params;
+        const { first_name, last_name, role, birth_date } = req.body;
+        const deviceId = req.headers['x-device-id'];
+
+        // Vérifier que la famille existe
+        const familyResult = await pool.query(
+            'SELECT id FROM families WHERE device_id = $1',
+            [deviceId]
+        );
+
+        if (familyResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Famille non trouvée' });
+        }
+
+        const familyId = familyResult.rows[0].id;
+
+        // Vérifier que le membre appartient à la famille
+        const memberCheckResult = await pool.query(
+            'SELECT id FROM family_members WHERE id = $1 AND family_id = $2',
+            [memberId, familyId]
+        );
+
+        if (memberCheckResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Membre non trouvé dans cette famille' });
+        }
+
+        // Mettre à jour le membre
+        const updateResult = await pool.query(
+            `UPDATE family_members 
+             SET first_name = COALESCE($1, first_name),
+                 last_name = COALESCE($2, last_name),
+                 role = COALESCE($3, role),
+                 birth_date = COALESCE($4, birth_date),
+                 updated_at = NOW()
+             WHERE id = $5 AND family_id = $6
+             RETURNING id, first_name, last_name, role, birth_date`,
+            [first_name, last_name, role, birth_date, memberId, familyId]
+        );
+
+        res.json({
+            message: 'Membre mis à jour avec succès',
+            data: updateResult.rows[0]
+        });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour du membre:', error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
+
+module.exports = {
+    createFamily,
+    getFamilyById,
+    updateFamily,
+    deleteFamily,
+    getFamiliesByUser,
+    updateFamilyMember
 }; 

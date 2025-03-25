@@ -1,25 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, View, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Text, ActivityIndicator, Dimensions } from "react-native";
-import { useNavigation, CommonActions } from "@react-navigation/native";
+import { SafeAreaView, View, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Text, ActivityIndicator, Dimensions, Modal } from "react-native";
+import { useNavigation, CommonActions, useTheme } from "@react-navigation/native";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getProfile } from '../services/profileService';
+import { getProfile, updateProfile, updateMemberProfile } from '../services/profileService';
 import { theme } from "../styles/theme";
+import { FamilyMemberEditor } from '../components/FamilyMemberEditor';
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
+  const { colors } = useTheme();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [error, setError] = useState(null);
   const insets = useSafeAreaInsets();
   const [preferences, setPreferences] = useState({
     travelStyle: 'moderate',
     accommodationType: 'comfort',
-    activities: ['nature', 'culture'],
+    activities: [],
     pace: 'balanced',
   });
+  const [editingMember, setEditingMember] = useState(null);
+  const [showMemberEditor, setShowMemberEditor] = useState(false);
+  const [isEditorVisible, setIsEditorVisible] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
 
   useEffect(() => {
     loadProfile();
@@ -30,11 +37,21 @@ export default function ProfileScreen() {
       setLoading(true);
       setError(null);
       const response = await getProfile();
-      console.log("Profile data received:", JSON.stringify(response, null, 2));
       if (!response) {
         throw new Error('No profile data received');
       }
       setProfile(response);
+      
+      // Mettre à jour les préférences avec les données du profil
+      if (response.travel_preferences) {
+        setPreferences(prev => ({
+          ...prev,
+          activities: response.travel_preferences.travel_type || [],
+          travelStyle: response.travel_preferences.budget || 'moderate',
+          accommodationType: response.travel_preferences.accommodation_type || 'comfort',
+          pace: response.travel_preferences.travel_pace || 'balanced',
+        }));
+      }
     } catch (err) {
       console.error("Error loading profile:", err);
       setError('Impossible de charger le profil');
@@ -44,6 +61,39 @@ export default function ProfileScreen() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    try {
+      setUpdating(true);
+      const updatedProfile = {
+        ...profile,
+        travel_preferences: {
+          travel_type: preferences.activities,
+          budget: preferences.travelStyle,
+          accommodation_type: preferences.accommodationType,
+          travel_pace: preferences.pace,
+        }
+      };
+      
+      await updateProfile(updatedProfile);
+      setProfile(prev => ({
+        ...prev,
+        travel_preferences: updatedProfile.travel_preferences
+      }));
+      Alert.alert(
+        'Succès',
+        'Vos préférences ont été mises à jour avec succès.'
+      );
+    } catch (err) {
+      console.error("Error saving preferences:", err);
+      Alert.alert(
+        'Erreur',
+        'Impossible de sauvegarder vos préférences. Veuillez réessayer.'
+      );
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -58,16 +108,33 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleEditMember = (memberId) => {
-    navigation.dispatch(
-      CommonActions.navigate({
-        name: 'Main',
-        params: {
-          screen: 'FamilyProfile',
-          params: { memberId }
-        },
-      })
-    );
+  const handleEditMember = (member = null) => {
+    setSelectedMember(member);
+    setIsEditorVisible(true);
+  };
+
+  const handleSaveMember = async (memberData) => {
+    try {
+      if (selectedMember) {
+        await updateMemberProfile(selectedMember.id, memberData);
+      } else {
+        // TODO: Implement add new member
+      }
+      await loadProfile();
+      setIsEditorVisible(false);
+      setSelectedMember(null);
+    } catch (error) {
+      Alert.alert(
+        'Erreur',
+        'Impossible de sauvegarder les modifications. Veuillez réessayer.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowMemberEditor(false);
+    setEditingMember(null);
   };
 
   // Calculer le nombre d'adultes et d'enfants
@@ -96,24 +163,47 @@ export default function ProfileScreen() {
     <View style={styles.preferenceSection}>
       <Text style={styles.sectionTitle}>Préférences de voyage</Text>
       
-      {/* Style de voyage */}
+      {/* Budget */}
       <View style={styles.preferenceItem}>
-        <Text style={styles.preferenceLabel}>Style de voyage</Text>
+        <Text style={styles.preferenceLabel}>Budget</Text>
         <View style={styles.preferenceOptions}>
-          {['budget', 'moderate', 'luxury'].map((style) => (
+          {['Économique', 'Modéré', 'Luxe'].map((budget) => (
             <TouchableOpacity
-              key={style}
+              key={budget}
               style={[
                 styles.preferenceOption,
-                preferences.travelStyle === style && styles.preferenceOptionSelected,
+                profile?.travel_preferences?.budget === budget && styles.preferenceOptionSelected,
               ]}
-              onPress={() => setPreferences({ ...preferences, travelStyle: style })}
+              onPress={async () => {
+                try {
+                  setUpdating(true);
+                  const updatedProfile = {
+                    family_name: profile.family_name,
+                    travel_preferences: {
+                      travel_type: profile?.travel_preferences?.travel_type || [],
+                      budget,
+                      accommodation_type: profile?.travel_preferences?.accommodation_type || 'Hôtel',
+                      travel_pace: profile?.travel_preferences?.travel_pace || 'Relaxé'
+                    }
+                  };
+                  await updateProfile(updatedProfile);
+                  setProfile(prev => ({
+                    ...prev,
+                    travel_preferences: updatedProfile.travel_preferences
+                  }));
+                } catch (err) {
+                  console.error("Error updating budget:", err);
+                  Alert.alert('Erreur', 'Impossible de mettre à jour le budget');
+                } finally {
+                  setUpdating(false);
+                }
+              }}
             >
               <Text style={[
                 styles.preferenceOptionText,
-                preferences.travelStyle === style && styles.preferenceOptionTextSelected,
+                profile?.travel_preferences?.budget === budget && styles.preferenceOptionTextSelected,
               ]}>
-                {style === 'budget' ? 'Budget' : style === 'moderate' ? 'Modéré' : 'Luxe'}
+                {budget}
               </Text>
             </TouchableOpacity>
           ))}
@@ -124,20 +214,43 @@ export default function ProfileScreen() {
       <View style={styles.preferenceItem}>
         <Text style={styles.preferenceLabel}>Type d'hébergement</Text>
         <View style={styles.preferenceOptions}>
-          {['basic', 'comfort', 'luxury'].map((type) => (
+          {['Hôtel', 'Appartement', 'Surprise'].map((type) => (
             <TouchableOpacity
               key={type}
               style={[
                 styles.preferenceOption,
-                preferences.accommodationType === type && styles.preferenceOptionSelected,
+                profile?.travel_preferences?.accommodation_type === type && styles.preferenceOptionSelected,
               ]}
-              onPress={() => setPreferences({ ...preferences, accommodationType: type })}
+              onPress={async () => {
+                try {
+                  setUpdating(true);
+                  const updatedProfile = {
+                    family_name: profile.family_name,
+                    travel_preferences: {
+                      travel_type: profile?.travel_preferences?.travel_type || [],
+                      budget: profile?.travel_preferences?.budget || 'Économique',
+                      accommodation_type: type,
+                      travel_pace: profile?.travel_preferences?.travel_pace || 'Relaxé'
+                    }
+                  };
+                  await updateProfile(updatedProfile);
+                  setProfile(prev => ({
+                    ...prev,
+                    travel_preferences: updatedProfile.travel_preferences
+                  }));
+                } catch (err) {
+                  console.error("Error updating accommodation type:", err);
+                  Alert.alert('Erreur', 'Impossible de mettre à jour le type d\'hébergement');
+                } finally {
+                  setUpdating(false);
+                }
+              }}
             >
               <Text style={[
                 styles.preferenceOptionText,
-                preferences.accommodationType === type && styles.preferenceOptionTextSelected,
+                profile?.travel_preferences?.accommodation_type === type && styles.preferenceOptionTextSelected,
               ]}>
-                {type === 'basic' ? 'Simple' : type === 'comfort' ? 'Confort' : 'Luxe'}
+                {type}
               </Text>
             </TouchableOpacity>
           ))}
@@ -148,38 +261,62 @@ export default function ProfileScreen() {
       <View style={styles.preferenceItem}>
         <Text style={styles.preferenceLabel}>Activités préférées</Text>
         <View style={styles.activitiesGrid}>
-          {['nature', 'culture', 'adventure', 'relaxation'].map((activity) => (
+          {['Culture', 'Nature', 'Plage', 'Sport', 'Découverte', 'Détente', 'Aventure', 'Non spécifié'].map((activity) => (
             <TouchableOpacity
               key={activity}
               style={[
                 styles.activityOption,
-                preferences.activities.includes(activity) && styles.activityOptionSelected,
+                profile?.travel_preferences?.travel_type?.includes(activity) && styles.activityOptionSelected,
               ]}
-              onPress={() => {
-                const newActivities = preferences.activities.includes(activity)
-                  ? preferences.activities.filter(a => a !== activity)
-                  : [...preferences.activities, activity];
-                setPreferences({ ...preferences, activities: newActivities });
+              onPress={async () => {
+                try {
+                  setUpdating(true);
+                  const currentActivities = profile?.travel_preferences?.travel_type || [];
+                  const newActivities = currentActivities.includes(activity)
+                    ? currentActivities.filter(a => a !== activity)
+                    : [...currentActivities, activity];
+                  
+                  const updatedProfile = {
+                    family_name: profile.family_name,
+                    travel_preferences: {
+                      travel_type: newActivities,
+                      budget: profile?.travel_preferences?.budget || 'Économique',
+                      accommodation_type: profile?.travel_preferences?.accommodation_type || 'Hôtel',
+                      travel_pace: profile?.travel_preferences?.travel_pace || 'Relaxé'
+                    }
+                  };
+                  await updateProfile(updatedProfile);
+                  setProfile(prev => ({
+                    ...prev,
+                    travel_preferences: updatedProfile.travel_preferences
+                  }));
+                } catch (err) {
+                  console.error("Error updating activities:", err);
+                  Alert.alert('Erreur', 'Impossible de mettre à jour les activités');
+                } finally {
+                  setUpdating(false);
+                }
               }}
             >
               <Ionicons
                 name={
-                  activity === 'nature' ? 'leaf-outline' :
-                  activity === 'culture' ? 'museum-outline' :
-                  activity === 'adventure' ? 'compass-outline' :
-                  'sunny-outline'
+                  activity === 'Nature' ? 'leaf-outline' :
+                  activity === 'Culture' ? 'library-outline' :
+                  activity === 'Plage' ? 'sunny-outline' :
+                  activity === 'Sport' ? 'bicycle-outline' :
+                  activity === 'Découverte' ? 'compass-outline' :
+                  activity === 'Détente' ? 'bed-outline' :
+                  activity === 'Aventure' ? 'map-outline' :
+                  'help-circle-outline'
                 }
                 size={24}
-                color={preferences.activities.includes(activity) ? '#fff' : theme.colors.primary}
+                color={profile?.travel_preferences?.travel_type?.includes(activity) ? '#fff' : theme.colors.primary}
               />
               <Text style={[
                 styles.activityOptionText,
-                preferences.activities.includes(activity) && styles.activityOptionTextSelected,
+                profile?.travel_preferences?.travel_type?.includes(activity) && styles.activityOptionTextSelected,
               ]}>
-                {activity === 'nature' ? 'Nature' :
-                 activity === 'culture' ? 'Culture' :
-                 activity === 'adventure' ? 'Aventure' :
-                 'Détente'}
+                {activity}
               </Text>
             </TouchableOpacity>
           ))}
@@ -190,22 +327,43 @@ export default function ProfileScreen() {
       <View style={styles.preferenceItem}>
         <Text style={styles.preferenceLabel}>Rythme de voyage</Text>
         <View style={styles.preferenceOptions}>
-          {['relaxed', 'balanced', 'intensive'].map((pace) => (
+          {['Relaxé', 'Equilibré', 'Actif'].map((pace) => (
             <TouchableOpacity
               key={pace}
               style={[
                 styles.preferenceOption,
-                preferences.pace === pace && styles.preferenceOptionSelected,
+                profile?.travel_preferences?.travel_pace === pace && styles.preferenceOptionSelected,
               ]}
-              onPress={() => setPreferences({ ...preferences, pace })}
+              onPress={async () => {
+                try {
+                  setUpdating(true);
+                  const updatedProfile = {
+                    family_name: profile.family_name,
+                    travel_preferences: {
+                      travel_type: profile?.travel_preferences?.travel_type || [],
+                      budget: profile?.travel_preferences?.budget || 'Économique',
+                      accommodation_type: profile?.travel_preferences?.accommodation_type || 'Hôtel',
+                      travel_pace: pace
+                    }
+                  };
+                  await updateProfile(updatedProfile);
+                  setProfile(prev => ({
+                    ...prev,
+                    travel_preferences: updatedProfile.travel_preferences
+                  }));
+                } catch (err) {
+                  console.error("Error updating travel pace:", err);
+                  Alert.alert('Erreur', 'Impossible de mettre à jour le rythme de voyage');
+                } finally {
+                  setUpdating(false);
+                }
+              }}
             >
               <Text style={[
                 styles.preferenceOptionText,
-                preferences.pace === pace && styles.preferenceOptionTextSelected,
+                profile?.travel_preferences?.travel_pace === pace && styles.preferenceOptionTextSelected,
               ]}>
-                {pace === 'relaxed' ? 'Détendu' :
-                 pace === 'balanced' ? 'Équilibré' :
-                 'Intensif'}
+                {pace}
               </Text>
             </TouchableOpacity>
           ))}
@@ -242,6 +400,11 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
+        {updating && (
+          <View style={styles.updatingIndicator}>
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          </View>
+        )}
         {/* En-tête avec photo de profil */}
         <View style={styles.header}>
           <View style={styles.profileImageContainer}>
@@ -277,7 +440,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               key={member.id}
               style={styles.memberCard}
-              onPress={() => handleEditMember(member.id)}
+              onPress={() => handleEditMember(member)}
             >
               <View style={styles.memberInfo}>
                 <View style={styles.memberAvatar}>
@@ -289,26 +452,25 @@ export default function ProfileScreen() {
                   <Text style={styles.memberName}>
                     {member.first_name} {member.last_name}
                   </Text>
-                  <View style={styles.memberMeta}>
-                    <Text style={styles.memberRole}>{member.role}</Text>
-                    {member.birth_date && (
-                      <Text style={styles.memberAge}>
-                        • {Math.floor((new Date() - new Date(member.birth_date)) / (1000 * 60 * 60 * 24 * 365.25))} ans
-                      </Text>
-                    )}
-                  </View>
+                  <Text style={styles.memberRole}>{member.role}</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={24} color="#666" />
+              <Ionicons name="chevron-forward" size={24} color={theme.colors.text} />
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* Bouton de sauvegarde */}
-        <TouchableOpacity style={styles.saveButton}>
-          <Text style={styles.saveButtonText}>Enregistrer les modifications</Text>
-        </TouchableOpacity>
       </ScrollView>
+      {isEditorVisible && (
+        <FamilyMemberEditor
+          visible={isEditorVisible}
+          member={selectedMember}
+          onSave={handleSaveMember}
+          onClose={() => {
+            setIsEditorVisible(false);
+            setSelectedMember(null);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -522,17 +684,17 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
   },
-  memberMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   memberRole: {
     fontSize: 14,
     color: '#666',
   },
-  memberAge: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
+  updatingIndicator: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: theme.colors.primary,
+    zIndex: 1000,
   },
 });

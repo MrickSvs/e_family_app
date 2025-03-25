@@ -6,12 +6,14 @@ import { colors, typography, spacing, borderRadius, commonStyles } from '../../s
 import OnboardingButton from '../../components/OnboardingButton';
 
 const travelTypes = [
-  { id: 'CULTURE', label: 'Culture', icon: 'book', description: 'Musées, histoire, patrimoine' },
-  { id: 'NATURE', label: 'Nature', icon: 'leaf', description: 'Randonnées, parcs naturels' },
-  { id: 'BEACH', label: 'Plage', icon: 'sunny', description: 'Mer, sable, détente' },
-  { id: 'SPORT', label: 'Sport', icon: 'bicycle', description: 'Activités sportives' },
-  { id: 'DISCOVERY', label: 'Découverte', icon: 'compass', description: 'Exploration, aventure' },
-  { id: 'RELAX', label: 'Détente', icon: 'bed', description: 'Repos, bien-être' },
+  { id: 'Culture', label: 'Culture', icon: 'book', description: 'Musées, histoire, patrimoine' },
+  { id: 'Nature', label: 'Nature', icon: 'leaf', description: 'Randonnées, parcs naturels' },
+  { id: 'Plage', label: 'Plage', icon: 'sunny', description: 'Mer, sable, détente' },
+  { id: 'Sport', label: 'Sport', icon: 'bicycle', description: 'Activités sportives' },
+  { id: 'Découverte', label: 'Découverte', icon: 'compass', description: 'Exploration, aventure' },
+  { id: 'Détente', label: 'Détente', icon: 'bed', description: 'Repos, bien-être' },
+  { id: 'Aventure', label: 'Aventure', icon: 'trekking', description: 'Activités intenses' },
+  { id: 'Non spécifié', label: 'Non spécifié', icon: 'help-circle', description: 'À définir plus tard' }
 ];
 
 export default function Step4TravelType() {

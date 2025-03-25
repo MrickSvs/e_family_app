@@ -15,12 +15,14 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 const TRAVEL_TYPES = [
-  { id: 'culture', label: 'Culture', icon: '🏛️' },
-  { id: 'nature', label: 'Nature', icon: '🌲' },
-  { id: 'beach', label: 'Plage', icon: '🏖️' },
-  { id: 'sport', label: 'Sport', icon: '⚽' },
-  { id: 'discovery', label: 'Découverte', icon: '🗺️' },
-  { id: 'relaxation', label: 'Détente', icon: '🧘‍♀️' },
+  { id: 'Culture', label: 'Culture', icon: '🏛️' },
+  { id: 'Nature', label: 'Nature', icon: '🌲' },
+  { id: 'Plage', label: 'Plage', icon: '🏖️' },
+  { id: 'Sport', label: 'Sport', icon: '⚽' },
+  { id: 'Découverte', label: 'Découverte', icon: '🗺️' },
+  { id: 'Détente', label: 'Détente', icon: '🧘‍♀️' },
+  { id: 'Aventure', label: 'Aventure', icon: '🏃‍♂️' },
+  { id: 'Non spécifié', label: 'Non spécifié', icon: '❓' }
 ];
 
 const BUDGET_RANGES = [
