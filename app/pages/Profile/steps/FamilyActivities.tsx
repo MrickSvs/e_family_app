@@ -5,11 +5,19 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
 
 interface ActivitiesData {
   preferred: string[];
   excluded: string[];
+  travel_preferences?: {
+    travel_type: string[];
+    budget: string;
+    accommodation_type: string;
+    travel_pace: string;
+  };
 }
 
 interface FamilyActivitiesProps {
@@ -32,24 +40,24 @@ const activities = {
     'Détente',
     'Non spécifié',
   ],
-  cultural: [
-    'Culture',
-    'Découverte',
-  ],
-  sports: [
-    'Sport',
-    'Aventure',
-    'Nature',
-  ],
 };
 
-export const FamilyActivities: React.FC<FamilyActivitiesProps> = ({
+// Fonction utilitaire pour obtenir une liste unique d'activités
+const getAllUniqueActivities = () => {
+  const allActivities = new Set([
+    ...activities.outdoor,
+    ...activities.indoor,
+  ]);
+  return Array.from(allActivities);
+};
+
+export const FamilyActivities = ({
   data,
   onUpdate,
   onPrevious,
   onComplete,
-}) => {
-  const [formData, setFormData] = useState<ActivitiesData>(data);
+}: FamilyActivitiesProps) => {
+  const [formData, setFormData] = useState(data);
 
   useEffect(() => {
     setFormData(data);
@@ -91,7 +99,30 @@ export const FamilyActivities: React.FC<FamilyActivitiesProps> = ({
   };
 
   const handleSubmit = () => {
-    onUpdate(formData);
+    // Log des données avant la conversion
+    console.log('Données avant conversion:', formData);
+
+    // Créer un nouvel objet travel_preferences sans écraser les données existantes
+    const travel_preferences = {
+      travel_type: formData.preferred, // Utiliser uniquement les nouvelles préférences
+      budget: formData.travel_preferences?.budget || 'Non spécifié',
+      accommodation_type: formData.travel_preferences?.accommodation_type || 'Non spécifié',
+      travel_pace: formData.travel_preferences?.travel_pace || 'Non spécifié'
+    };
+    
+    // Log des travel_preferences
+    console.log('Travel preferences après conversion:', travel_preferences);
+
+    const updatedData = {
+      preferred: formData.preferred,
+      excluded: formData.excluded,
+      travel_preferences
+    };
+
+    // Log des données finales
+    console.log('Données finales envoyées:', updatedData);
+    
+    onUpdate(updatedData);
     onComplete();
   };
 
@@ -104,57 +135,59 @@ export const FamilyActivities: React.FC<FamilyActivitiesProps> = ({
           const isExcluded = formData.excluded.includes(activity);
 
           return (
-            <View key={activity} style={styles.activityWrapper}>
-              <TouchableOpacity
-                style={[
-                  styles.activityChip,
-                  isPreferred && styles.preferredChip,
-                  isExcluded && styles.excludedChip,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.activityText,
-                    isPreferred && styles.preferredText,
-                    isExcluded && styles.excludedText,
-                  ]}
-                >
-                  {activity}
-                </Text>
-              </TouchableOpacity>
-              <View style={styles.activityActions}>
+            <View key={activity}>
+              <View style={styles.activityWrapper}>
                 <TouchableOpacity
                   style={[
-                    styles.actionButton,
-                    isPreferred && styles.actionButtonActive,
+                    styles.activityChip,
+                    isPreferred && styles.preferredChip,
+                    isExcluded && styles.excludedChip,
                   ]}
-                  onPress={() => toggleActivity(activity, 'preferred')}
                 >
                   <Text
                     style={[
-                      styles.actionButtonText,
-                      isPreferred && styles.actionButtonTextActive,
+                      styles.activityText,
+                      isPreferred && styles.preferredText,
+                      isExcluded && styles.excludedText,
                     ]}
                   >
-                    👍
+                    {activity}
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    isExcluded && styles.actionButtonActive,
-                  ]}
-                  onPress={() => toggleActivity(activity, 'excluded')}
-                >
-                  <Text
+                <View style={styles.activityActions}>
+                  <TouchableOpacity
                     style={[
-                      styles.actionButtonText,
-                      isExcluded && styles.actionButtonTextActive,
+                      styles.actionButton,
+                      isPreferred && styles.actionButtonActive,
                     ]}
+                    onPress={() => toggleActivity(activity, 'preferred')}
                   >
-                    👎
-                  </Text>
-                </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.actionButtonText,
+                        isPreferred && styles.actionButtonTextActive,
+                      ]}
+                    >
+                      👍
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.actionButton,
+                      isExcluded && styles.actionButtonActive,
+                    ]}
+                    onPress={() => toggleActivity(activity, 'excluded')}
+                  >
+                    <Text
+                      style={[
+                        styles.actionButtonText,
+                        isExcluded && styles.actionButtonTextActive,
+                      ]}
+                    >
+                      👎
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           );
@@ -172,8 +205,6 @@ export const FamilyActivities: React.FC<FamilyActivitiesProps> = ({
 
       {renderActivitySection('Activités en plein air', activities.outdoor)}
       {renderActivitySection('Activités d\'intérieur', activities.indoor)}
-      {renderActivitySection('Activités culturelles', activities.cultural)}
-      {renderActivitySection('Sports', activities.sports)}
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity

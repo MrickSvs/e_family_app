@@ -23,6 +23,7 @@ import ProfileScreen from './app/screens/ProfileScreen';
 import UpcomingTripDetailScreen from './src/screens/UpcomingTripDetailScreen';
 import PastTripDetailScreen from './src/screens/PastTripDetailScreen';
 import TripDetailScreen from './src/screens/TripDetailScreen';
+import ItineraryListScreen from './src/screens/ItineraryListScreen';
 
 // ... existing code ...
 
@@ -34,7 +35,9 @@ function MainNavigator() {
         headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'FamilyTrips') {
+          if (route.name === 'ItineraryList') {
+            iconName = focused ? 'compass' : 'compass-outline';
+          } else if (route.name === 'FamilyTrips') {
             iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'MyTrips') {
             iconName = focused ? 'calendar' : 'calendar-outline';
@@ -50,9 +53,14 @@ function MainNavigator() {
       })}
     >
       <Tab.Screen 
+        name="ItineraryList" 
+        component={ItineraryListScreen}
+        options={{ tabBarLabel: 'Découvrir' }}
+      />
+      <Tab.Screen 
         name="FamilyTrips" 
         component={FamilyTripsScreen}
-        options={{ tabBarLabel: 'Itinéraires' }}
+        options={{ tabBarLabel: 'Mes Voyages' }}
       />
       <Tab.Screen 
         name="MyTrips" 

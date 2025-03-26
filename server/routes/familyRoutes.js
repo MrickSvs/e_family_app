@@ -160,7 +160,18 @@ const familySchema = Joi.object({
     family_name: Joi.string().min(2).max(255),
     interests: Joi.array().items(Joi.string()),
     travel_preferences: Joi.object({
-        travel_type: Joi.array().items(Joi.string().valid('Découverte', 'Aventure', 'Détente', 'Culture')),
+        travel_type: Joi.array().items(
+            Joi.string().valid(
+                'Culture',
+                'Nature',
+                'Plage',
+                'Sport',
+                'Découverte',
+                'Détente',
+                'Aventure',
+                'Non spécifié'
+            ).required()
+        ).single().required(),
         budget: Joi.string().valid('Économique', 'Modéré', 'Luxe'),
         accommodation_type: Joi.string().valid('Hôtel', 'Appartement', 'Surprise'),
         travel_pace: Joi.string().valid('Relaxé', 'Equilibré', 'Actif')
@@ -227,9 +238,9 @@ router.get('/by-device/:device_id', async (req, res) => {
         
         // Récupérer les informations de base de la famille et ses préférences
         const familyResult = await pool.query(`
-            SELECT f.*, fp.travel_type, fp.budget, fp.accommodation_type, fp.travel_pace 
+            SELECT f.*, ftp.travel_types, ftp.budget, ftp.accommodation_type, ftp.travel_pace 
             FROM families f
-            LEFT JOIN family_preferences fp ON f.id = fp.family_id
+            LEFT JOIN family_travel_preferences ftp ON f.id = ftp.family_id
             WHERE f.device_id = $1
         `, [req.params.device_id]);
 
@@ -273,7 +284,7 @@ router.get('/by-device/:device_id', async (req, res) => {
                     birth_date: member.birth_date
                 })),
                 travel_preferences: {
-                    travel_type: family.travel_type || [],
+                    travel_type: family.travel_types || [],
                     budget: family.budget || "Non spécifié",
                     accommodation_type: family.accommodation_type || "Non spécifié",
                     travel_pace: family.travel_pace || "Non spécifié"
@@ -333,10 +344,10 @@ router.post('/by-device/:device_id', validateFamily, async (req, res) => {
         // Ajouter les préférences de voyage si fournies
         if (travel_preferences) {
             await pool.query(
-                `INSERT INTO family_preferences (family_id, travel_type, budget, accommodation_type, travel_pace)
+                `INSERT INTO family_travel_preferences (family_id, travel_types, budget, accommodation_type, travel_pace)
                  VALUES ($1, $2, $3, $4, $5)`,
                 [familyId, 
-                 travel_preferences.travel_type, 
+                 travel_preferences.travel_type,
                  travel_preferences.budget,
                  travel_preferences.accommodation_type,
                  travel_preferences.travel_pace]
@@ -369,6 +380,13 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
         const { device_id } = req.params;
         const { family_name, interests, travel_preferences } = req.body;
 
+        console.log('🔍 [PUT /by-device] Requête reçue:', {
+            device_id,
+            family_name,
+            interests,
+            travel_preferences
+        });
+
         // Vérifier si la famille existe
         const familyResult = await pool.query(
             'SELECT id FROM families WHERE device_id = $1',
@@ -376,6 +394,7 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
         );
 
         if (familyResult.rows.length === 0) {
+            console.log('❌ [PUT /by-device] Famille non trouvée:', device_id);
             return res.status(404).json({
                 success: false,
                 message: "Famille non trouvée"
@@ -383,9 +402,11 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
         }
 
         const familyId = familyResult.rows[0].id;
+        console.log('✅ [PUT /by-device] Famille trouvée:', familyId);
 
         // Mettre à jour le nom de la famille si fourni
         if (family_name) {
+            console.log('📝 [PUT /by-device] Mise à jour du nom:', family_name);
             await pool.query(
                 'UPDATE families SET family_name = $1 WHERE id = $2',
                 [family_name, familyId]
@@ -394,6 +415,7 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
 
         // Mettre à jour les intérêts si fournis
         if (interests) {
+            console.log('📝 [PUT /by-device] Mise à jour des intérêts:', interests);
             // Supprimer les anciens intérêts
             await pool.query(
                 'DELETE FROM family_interests WHERE family_id = $1',
@@ -414,20 +436,39 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
 
         // Mettre à jour les préférences de voyage si fournies
         if (travel_preferences) {
+            console.log('📝 [PUT /by-device] Mise à jour des préférences de voyage:', travel_preferences);
+            
+            // S'assurer que travel_type est un tableau
+            const travelTypes = Array.isArray(travel_preferences.travel_type) 
+                ? travel_preferences.travel_type 
+                : [travel_preferences.travel_type];
+
+            console.log('ℹ️ [PUT /by-device] Types de voyage reçus:', travelTypes);
+
+            // Vérifier les préférences existantes
+            const existingPrefs = await pool.query(
+                'SELECT * FROM family_travel_preferences WHERE family_id = $1',
+                [familyId]
+            );
+            console.log('ℹ️ [PUT /by-device] Préférences existantes:', existingPrefs.rows[0]);
+
             await pool.query(
-                `INSERT INTO family_preferences (family_id, travel_type, budget, accommodation_type, travel_pace)
+                `INSERT INTO family_travel_preferences (family_id, travel_types, budget, accommodation_type, travel_pace)
                  VALUES ($1, $2, $3, $4, $5)
                  ON CONFLICT (family_id) DO UPDATE
-                 SET travel_type = EXCLUDED.travel_type,
-                     budget = EXCLUDED.budget,
-                     accommodation_type = EXCLUDED.accommodation_type,
-                     travel_pace = EXCLUDED.travel_pace`,
+                 SET travel_types = $2,
+                     budget = $3,
+                     accommodation_type = $4,
+                     travel_pace = $5
+                 RETURNING *`,
                 [familyId, 
-                 travel_preferences.travel_type, 
+                 travelTypes,
                  travel_preferences.budget,
                  travel_preferences.accommodation_type,
                  travel_preferences.travel_pace]
-            );
+            ).then(result => {
+                console.log('✅ [PUT /by-device] Préférences mises à jour:', result.rows[0]);
+            });
         }
 
         res.json({
@@ -435,7 +476,7 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
             message: "Profil familial mis à jour avec succès"
         });
     } catch (error) {
-        console.error("❌ [updateFamilyProfile] Erreur:", error);
+        console.error("❌ [PUT /by-device] Erreur:", error);
         res.status(500).json({
             success: false,
             message: "Erreur lors de la mise à jour du profil"

@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View, TouchableOpacity, Text } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { getFamilyInfo } from "../services/familyService";
+import { getItineraries } from "../services/itineraryService";
 import { TripCard, InfoMessage } from "../components/design-system";
 import { theme } from "../styles/theme";
 import { Ionicons } from "@expo/vector-icons";
@@ -43,34 +44,49 @@ const FamilyHeader = ({ family }) => {
 export default function FamilyTripsScreen() {
   const navigation = useNavigation();
   const [familyData, setFamilyData] = useState(null);
+  const [itineraries, setItineraries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadFamilyData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getFamilyInfo();
-      console.log("✅ Données reçues:", response);
-      setFamilyData(response);
-    } catch (err) {
-      console.error("❌ Erreur:", err);
-      setError(err.message);
+      
+      // Récupérer les informations de la famille
+      const familyInfo = await getFamilyInfo();
+      setFamilyData(familyInfo);
+
+      // Récupérer les itinéraires
+      const itinerariesData = await getItineraries();
+      setItineraries(itinerariesData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Une erreur est survenue lors du chargement des données');
     } finally {
       setLoading(false);
     }
   };
 
+  // Charger les données au montage du composant
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Recharger les données quand l'écran est focalisé
   useFocusEffect(
     React.useCallback(() => {
-      loadFamilyData();
+      fetchData();
     }, [])
   );
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#0F8066" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Chargement...</Text>
+        </View>
       </SafeAreaView>
     );
   }
@@ -78,60 +94,15 @@ export default function FamilyTripsScreen() {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Une erreur est survenue: {error}</Text>
-        <TouchableOpacity onPress={loadFamilyData}>
-          <Text style={styles.retryText}>Réessayer</Text>
-        </TouchableOpacity>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={fetchData}>
+            <Text style={styles.retryText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     );
   }
-
-  const trips = [
-    {
-      id: 1,
-      title: "Costa Rica en famille",
-      duration: "10 jours",
-      type: "Nature & découverte",
-      description:
-        "Idéal pour les jeunes enfants grâce aux courtes distances et hébergements confortables.",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=3840,height=2160,quality=70,fit=crop/offer/raw/2023/11/30/cbb4bd64-8c1d-44b7-9d51-c0847f5d8c80.jpg",
-      tags: ["Parfait avec bébé", "Coup de cœur familles"],
-      price: 2490,
-    },
-    {
-      id: 2,
-      title: "Thaïlande, rencontres ethniques",
-      duration: "7 jours",
-      type: "Exploration",
-      description:
-        "Partez visiter les montagnes du Nord aux lacs du Sud dans un rythme adapté a tous",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/07/27/57adf10e-50de-47b2-b07d-02d0d1ab8167.jpg",
-      tags: ["Facile avec enfants en bas âge"],
-      price: 1890,
-    },
-    {
-      id: 3,
-      title: "Safari Afrique du Sud",
-      duration: "14 jours",
-      type: "Aventure & culture",
-      description:
-        "Une expérience unique pour observer les Big Five dans leur habitat naturel",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2024/08/28/9cea9434-1cec-45c4-81af-c30b87cba72f.jpg",
-      tags: ["Safari", "Aventure"],
-      price: 3290,
-    },
-    {
-      id: 4,
-      title: "Italie : Douceur Toscane",
-      duration: "7 jours",
-      type: "Culture & détente",
-      description:
-        "Un rythme adapté, des découvertes culturelles et une gastronomie accessible à tous",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2023/06/19/e389cda8-ad5f-4145-8517-f7d76c636b19.jpg",
-      tags: ["Culture", "Gastronomie"],
-      price: 1590,
-    },
-  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -144,11 +115,20 @@ export default function FamilyTripsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <FamilyHeader family={familyData} />
-        {trips.map((trip) => (
+        {itineraries.map((itinerary) => (
           <TripCard
-            key={trip.id}
-            trip={trip}
-            onPress={() => navigation.navigate('TripDetail', { trip, isPast: false })}
+            key={itinerary.id}
+            trip={{
+              id: itinerary.id,
+              title: itinerary.title,
+              duration: `${itinerary.duration} jours`,
+              type: itinerary.type,
+              description: itinerary.description,
+              imageUrl: itinerary.image_url,
+              tags: itinerary.tags,
+              price: itinerary.price
+            }}
+            onPress={() => navigation.navigate('TripDetail', { trip: itinerary, isPast: false })}
           />
         ))}
       </ScrollView>
@@ -172,10 +152,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333333',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: theme.colors.primary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
   errorText: {
     color: '#FF0000',
     textAlign: 'center',
-    margin: 16,
+    marginBottom: 16,
   },
   retryText: {
     color: '#0F8066',

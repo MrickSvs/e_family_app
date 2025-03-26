@@ -2,7 +2,7 @@ import axios from 'axios';
 import { API_URL } from '../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const getDeviceId = async () => {
+export const getDeviceId = async () => {
   let deviceId = await AsyncStorage.getItem('deviceId');
   if (!deviceId) {
     deviceId = Math.random().toString(36).substring(7);
@@ -55,13 +55,8 @@ export const updateProfile = async (profileData) => {
     console.log('🔑 [updateProfile] Device ID:', deviceId);
     
     // Validation des valeurs
-    const validTravelTypes = ['Découverte', 'Aventure', 'Détente', 'Culture'];
     const validAccommodationTypes = ['Hôtel', 'Appartement', 'Surprise'];
     const validTravelPaces = ['Relaxé', 'Equilibré', 'Actif'];
-    
-    // Filtrer les types de voyage invalides
-    const travelTypes = (profileData.travel_preferences?.travel_type || [])
-      .filter(type => validTravelTypes.includes(type));
     
     // S'assurer que le type d'hébergement est valide
     const accommodationType = validAccommodationTypes.includes(profileData.travel_preferences?.accommodation_type)
@@ -77,7 +72,7 @@ export const updateProfile = async (profileData) => {
     const formattedData = {
       family_name: profileData.family_name,
       travel_preferences: {
-        travel_type: travelTypes,
+        travel_type: profileData.travel_preferences?.travel_type || [],
         budget: profileData.travel_preferences?.budget || 'Économique',
         accommodation_type: accommodationType,
         travel_pace: travelPace

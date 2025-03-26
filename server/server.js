@@ -8,6 +8,7 @@ const swaggerSpecs = require('./swagger');
 const onboardingRoutes = require('./routes/onboarding');
 const familyRoutes = require('./routes/familyRoutes');
 const tripRoutes = require('./routes/trips');
+const itineraryRoutes = require('./routes/itineraryRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +24,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 app.use('/api', onboardingRoutes);
 app.use('/api/families', familyRoutes);
 app.use('/api', tripRoutes);
+app.use('/api/itineraries', itineraryRoutes);
 
 // Démarrer le serveur
 app.listen(PORT, () => {
