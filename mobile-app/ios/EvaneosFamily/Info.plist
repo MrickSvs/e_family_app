@@ -44,6 +44,16 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSCameraUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your camera</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Nous avons besoin de votre localisation pour suivre votre parcours et afficher votre position sur la carte pendant votre voyage.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Nous avons besoin de votre localisation pour afficher votre position sur la carte pendant votre voyage.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Allow $(PRODUCT_NAME) to access your photos</string>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
@@ -70,9 +80,5 @@
     <string>Light</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>Nous avons besoin de votre localisation pour afficher votre position sur la carte pendant votre voyage.</string>
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>Nous avons besoin de votre localisation pour suivre votre parcours et afficher votre position sur la carte pendant votre voyage.</string>
   </dict>
 </plist>

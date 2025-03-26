@@ -29,8 +29,8 @@ sharp(inputPath)
 
 sharp(inputPath)
   .resize({
-    width: 200,  // Réduire la taille pour le logo
-    height: 200,
+    width: 800,  // Doubler la taille du logo
+    height: 800,
     fit: 'contain',
     background: { r: 15, g: 128, b: 102, alpha: 1 } // #0f8066
   })

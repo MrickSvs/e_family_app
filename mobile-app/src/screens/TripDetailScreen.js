@@ -119,7 +119,7 @@ export default function TripDetailScreen() {
   const renderDetailedItinerary = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Itinéraire détaillé</Text>
-      {trip.itinerary?.map((day, index) => (
+      {trip.points?.map((day, index) => (
         <TouchableOpacity 
           key={index} 
           style={styles.dayCard}
@@ -131,10 +131,11 @@ export default function TripDetailScreen() {
             <Ionicons name="chevron-forward" size={24} color={theme.colors.primary} />
           </View>
           <View style={styles.dayContent}>
+            <Text style={styles.dayDescription}>{day.description}</Text>
             {day.steps?.slice(0, 3).map((step, stepIndex) => (
               <View key={stepIndex} style={styles.stepItem}>
-                <Ionicons name="time-outline" size={16} color="#666" />
-                <Text style={styles.stepText}>{step}</Text>
+                <Ionicons name={step.icon || "time-outline"} size={16} color="#666" />
+                <Text style={styles.stepText}>{step.time} - {step.activity}</Text>
               </View>
             ))}
             {day.steps?.length > 3 && (
@@ -149,14 +150,20 @@ export default function TripDetailScreen() {
   const renderInteractiveMap = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Carte interactive</Text>
-      <TripMap itinerary={trip.itinerary} />
-      <TouchableOpacity 
-        style={styles.mapButton}
-        onPress={() => navigation.navigate('FullMap', { itinerary: trip.itinerary })}
-      >
-        <Ionicons name="expand-outline" size={24} color="#fff" />
-        <Text style={styles.mapButtonText}>Voir la carte complète</Text>
-      </TouchableOpacity>
+      <View style={styles.mapContainer}>
+        <TripMap 
+          itinerary={trip} 
+          style={styles.map}
+          showFamilyTips={true}
+        />
+        <TouchableOpacity 
+          style={styles.mapButton}
+          onPress={() => navigation.navigate('FullMap', { itinerary: trip })}
+        >
+          <Ionicons name="expand-outline" size={24} color="#fff" />
+          <Text style={styles.mapButtonText}>Voir la carte complète</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -479,6 +486,12 @@ const styles = StyleSheet.create({
   dayContent: {
     padding: 16,
   },
+  dayDescription: {
+    fontSize: 14,
+    color: theme.colors.text.medium,
+    marginBottom: 12,
+    lineHeight: 20,
+  },
   stepItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -585,5 +598,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  mapContainer: {
+    height: 300,
+    marginVertical: 8,
+  },
+  map: {
+    height: '100%',
   },
 }); 
