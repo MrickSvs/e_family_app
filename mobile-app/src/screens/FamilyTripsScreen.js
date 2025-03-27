@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View, TouchableOpacity, Text } from "react-native";
+import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View, TouchableOpacity, Text, Image } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { getFamilyInfo } from "../services/familyService";
 import { getItineraries } from "../services/itineraryService";
@@ -41,10 +41,43 @@ const FamilyHeader = ({ family }) => {
   );
 };
 
+const DestinationsSection = ({ destinations, onDestinationPress }) => {
+  if (!destinations?.length) return null;
+
+  return (
+    <View style={styles.destinationsSection}>
+      <Text style={styles.sectionTitle}>Destinations conseillées</Text>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.destinationsContainer}
+      >
+        {destinations.map((destination) => (
+          <TouchableOpacity
+            key={destination.id}
+            style={styles.destinationCard}
+            onPress={() => onDestinationPress(destination)}
+          >
+            <Image
+              source={{ uri: destination.image_url }}
+              style={styles.destinationImage}
+            />
+            <View style={styles.destinationInfo}>
+              <Text style={styles.destinationName}>{destination.name}</Text>
+              <Text style={styles.destinationDescription}>{destination.description}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
 export default function FamilyTripsScreen() {
   const navigation = useNavigation();
   const [familyData, setFamilyData] = useState(null);
   const [itineraries, setItineraries] = useState([]);
+  const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -60,6 +93,38 @@ export default function FamilyTripsScreen() {
       // Récupérer les itinéraires
       const itinerariesData = await getItineraries();
       setItineraries(itinerariesData);
+
+      // TODO: Implémenter getDestinations dans le service
+      // const destinationsData = await getDestinations();
+      // setDestinations(destinationsData);
+      
+      // Données temporaires pour la démonstration
+      setDestinations([
+        {
+          id: 1,
+          name: "Bali",
+          description: "Île paradisiaque",
+          image_url: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&auto=format&fit=crop&q=60"
+        },
+        {
+          id: 2,
+          name: "Thaïlande",
+          description: "Culture et plages",
+          image_url: "https://images.unsplash.com/photo-1528181304800-259b08848526?w=800&auto=format&fit=crop&q=60"
+        },
+        {
+          id: 3,
+          name: "Japon",
+          description: "Traditions et modernité",
+          image_url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop&q=60"
+        },
+        {
+          id: 4,
+          name: "Maroc",
+          description: "Mystère et authenticité",
+          image_url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop&q=60"
+        }
+      ]);
     } catch (error) {
       console.error('Error fetching data:', error);
       setError('Une erreur est survenue lors du chargement des données');
@@ -110,27 +175,38 @@ export default function FamilyTripsScreen() {
         <Text style={styles.title}>Evaneos Family</Text>
       </View>
 
+      <View style={styles.familyHeaderContainer}>
+        <FamilyHeader family={familyData} />
+      </View>
+
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        <FamilyHeader family={familyData} />
-        {itineraries.map((itinerary) => (
-          <TripCard
-            key={itinerary.id}
-            trip={{
-              id: itinerary.id,
-              title: itinerary.title,
-              duration: `${itinerary.duration} jours`,
-              type: itinerary.type,
-              description: itinerary.description,
-              imageUrl: itinerary.image_url,
-              tags: itinerary.tags,
-              price: itinerary.price
-            }}
-            onPress={() => navigation.navigate('TripDetail', { trip: itinerary, isPast: false })}
-          />
-        ))}
+        <DestinationsSection 
+          destinations={destinations}
+          onDestinationPress={(destination) => navigation.navigate('DestinationDetail', { destination })}
+        />
+
+        <View style={styles.itinerariesSection}>
+          <Text style={styles.sectionTitle}>Itinéraires conseillés</Text>
+          {itineraries.map((itinerary) => (
+            <TripCard
+              key={itinerary.id}
+              trip={{
+                id: itinerary.id,
+                title: itinerary.title,
+                duration: `${itinerary.duration} jours`,
+                type: itinerary.type,
+                description: itinerary.description,
+                imageUrl: itinerary.image_url,
+                tags: itinerary.tags,
+                price: itinerary.price
+              }}
+              onPress={() => navigation.navigate('TripDetail', { trip: itinerary, isPast: false })}
+            />
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -144,6 +220,14 @@ const styles = StyleSheet.create({
   header: {
     padding: 16,
     backgroundColor: '#F7F5ED',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  familyHeaderContainer: {
+    backgroundColor: '#F7F5ED',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
   },
@@ -180,7 +264,6 @@ const styles = StyleSheet.create({
   },
   familyHeader: {
     backgroundColor: '#FFFFFF',
-    margin: 16,
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000000',
@@ -221,5 +304,51 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     paddingBottom: 16,
+  },
+  destinationsSection: {
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 16,
+    marginLeft: 16,
+  },
+  destinationsContainer: {
+    paddingHorizontal: 16,
+  },
+  destinationCard: {
+    width: 280,
+    height: 180,
+    marginRight: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  destinationImage: {
+    width: '100%',
+    height: 120,
+  },
+  destinationInfo: {
+    padding: 12,
+  },
+  destinationName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
+  },
+  destinationDescription: {
+    fontSize: 14,
+    color: '#666666',
+  },
+  itinerariesSection: {
+    marginTop: 24,
   },
 });

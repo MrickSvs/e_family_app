@@ -10,6 +10,7 @@ import {
   Dimensions,
   Alert,
   Animated,
+  FlatList,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,6 +25,8 @@ import { theme } from "../styles/theme";
 const { width } = Dimensions.get("window");
 const HEADER_HEIGHT = 60;
 const HERO_HEIGHT = 400;
+const CARD_WIDTH = width - 48;
+const CARD_MARGIN = 8;
 
 export default function TripDetailScreen() {
   const route = useRoute();
@@ -34,6 +37,7 @@ export default function TripDetailScreen() {
   const [familyMembers, setFamilyMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef(null);
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, HERO_HEIGHT - HEADER_HEIGHT],
@@ -78,6 +82,26 @@ export default function TripDetailScreen() {
     </Animated.View>
   );
 
+  const renderImageCard = ({ item, index }) => (
+    <TouchableOpacity
+      style={[
+        styles.imageCard,
+        index === selectedImageIndex && styles.imageCardFocused
+      ]}
+      onPress={() => setSelectedImageIndex(index)}
+    >
+      <Image 
+        source={{ uri: item.imageUrl }} 
+        style={styles.imageCardImage}
+        resizeMode="cover"
+      />
+      <View style={styles.imageCardContent}>
+        <Text style={styles.imageCardTitle}>{item.title}</Text>
+        <Text style={styles.imageCardDescription}>{item.description}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
   const renderHeroSection = () => (
     <Animated.View style={[styles.heroSection, { transform: [{ scale: heroScale }] }]}>
       <Image source={{ uri: trip.imageUrl }} style={styles.coverImage} />
@@ -96,6 +120,39 @@ export default function TripDetailScreen() {
       </View>
     </Animated.View>
   );
+
+  const renderImageCarousel = () => {
+    const images = trip.points?.map(point => ({
+      imageUrl: point.imageUrl,
+      title: point.title,
+      description: point.description
+    })) || [];
+
+    if (images.length === 0) return null;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Photos du voyage</Text>
+        <FlatList
+          ref={flatListRef}
+          data={images}
+          renderItem={renderImageCard}
+          keyExtractor={(_, index) => index.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
+          decelerationRate="fast"
+          contentContainerStyle={styles.carouselContent}
+          onMomentumScrollEnd={(event) => {
+            const newIndex = Math.round(
+              event.nativeEvent.contentOffset.x / (CARD_WIDTH + CARD_MARGIN * 2)
+            );
+            setSelectedImageIndex(newIndex);
+          }}
+        />
+      </View>
+    );
+  };
 
   const renderSummarySection = () => (
     <View style={styles.section}>
@@ -196,6 +253,7 @@ export default function TripDetailScreen() {
       
       <View style={styles.contentContainer}>
         {renderSummarySection()}
+        {renderImageCarousel()}
         {renderInteractiveMap()}
         {renderDetailedItinerary()}
         {renderPracticalInfo()}
@@ -605,5 +663,48 @@ const styles = StyleSheet.create({
   },
   map: {
     height: '100%',
+  },
+  carouselContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  imageCard: {
+    width: CARD_WIDTH,
+    marginHorizontal: CARD_MARGIN,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  imageCardFocused: {
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 5,
+    transform: [{ scale: 1.02 }],
+  },
+  imageCardImage: {
+    width: '100%',
+    height: 200,
+  },
+  imageCardContent: {
+    padding: 16,
+  },
+  imageCardTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  imageCardDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
   },
 }); 

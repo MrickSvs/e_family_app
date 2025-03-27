@@ -1,75 +1,62 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
 
 export const LocalTips = ({ familyProfile, destination }) => {
   // Données mockées pour les conseils locaux
   const tips = {
-    restaurants: [
-      {
-        title: "Restaurants adaptés aux enfants",
-        description: "Liste des restaurants avec menus enfants et espace de jeux",
-        icon: "restaurant-outline"
-      },
-      {
-        title: "Pique-nique en famille",
-        description: "Les meilleurs spots pour pique-niquer avec les enfants",
-        icon: "basket-outline"
-      }
-    ],
-    activités: [
-      {
-        title: "Parcs et jardins",
-        description: "Les plus beaux parcs pour les enfants",
-        icon: "leaf-outline"
-      },
-      {
-        title: "Musées interactifs",
-        description: "Musées adaptés aux enfants avec des activités ludiques",
-        icon: "museum-outline"
-      }
-    ],
-    transport: [
-      {
-        title: "Transport en famille",
-        description: "Les meilleures options de transport avec des enfants",
-        icon: "bus-outline"
-      }
-    ],
-    santé: [
-      {
-        title: "Pharmacies et hôpitaux",
-        description: "Les établissements médicaux à proximité",
-        icon: "medical-outline"
-      }
-    ]
+    children: {
+      title: "🧒 Pour les enfants",
+      tips: [
+        "Prévoir un carnet de voyage à compléter avec des dessins, stickers et anecdotes par jour.",
+        "Organiser un jeu de piste autour des temples de Bangkok : \"Trouvez le plus grand Bouddha !\"",
+        "Choisir un hébergement avec piscine à chaque étape pour des moments de détente après les visites."
+      ]
+    },
+    relaxation: {
+      title: "🧘 Moments de détente",
+      tips: [
+        "À Kanchanaburi, privilégier un lodge nature avec des hamacs ou des kayaks pour s'amuser en famille.",
+        "Sur les plages, prévoir des journées libres pour du snorkeling ou construire des châteaux de sable."
+      ]
+    },
+    dining: {
+      title: "🍽️ Restauration",
+      tips: [
+        "Repérer des restaurants kids-friendly à Bangkok avec menus adaptés et chaises hautes.",
+        "Tester des cours de cuisine thaï en famille : simple, fun, et mémorable !"
+      ]
+    },
+    travel: {
+      title: "🧭 Astuce voyage",
+      tips: [
+        "Prévoir un rythme cool : une activité principale le matin, détente l'après-midi.",
+        "Penser à la météo : certaines activités (balade à vélo, plage) peuvent dépendre des averses."
+      ]
+    }
   };
 
-  const renderTipSection = (title, tips, icon) => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Ionicons name={icon} size={24} color={theme.colors.primary} />
-        <Text style={styles.sectionTitle}>{title}</Text>
+  const renderTipSection = (section) => {
+    const data = tips[section];
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{data.title}</Text>
+        {data.tips.map((tip, index) => (
+          <View key={index} style={styles.tipCard}>
+            <Text style={styles.tipText}>{tip}</Text>
+          </View>
+        ))}
       </View>
-      {tips.map((tip, index) => (
-        <TouchableOpacity key={index} style={styles.tipCard}>
-          <Text style={styles.tipTitle}>{tip.title}</Text>
-          <Text style={styles.tipDescription}>{tip.description}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.mainTitle}>Conseils locaux pour votre famille</Text>
       <Text style={styles.subtitle}>Adaptés à votre profil familial</Text>
 
-      {renderTipSection("Restaurants", tips.restaurants, "restaurant-outline")}
-      {renderTipSection("Activités", tips.activités, "game-controller-outline")}
-      {renderTipSection("Transport", tips.transport, "bus-outline")}
-      {renderTipSection("Santé", tips.santé, "medical-outline")}
+      {Object.keys(tips).map(section => renderTipSection(section))}
     </ScrollView>
   );
 };
@@ -96,16 +83,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     paddingHorizontal: 16,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    marginLeft: 8,
+    marginBottom: 12,
   },
   tipCard: {
     backgroundColor: '#f8f8f8',
@@ -113,13 +95,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 8,
   },
-  tipTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  tipDescription: {
+  tipText: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,

@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
 
 export const FlightPrices = ({ destination, origin }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState('peak');
-
   // Données mockées pour les prix des billets
   const priceData = {
     peak: {
@@ -45,22 +43,14 @@ export const FlightPrices = ({ destination, origin }) => {
 
   const renderPeriodCard = (period) => {
     const data = priceData[period];
-    const isSelected = selectedPeriod === period;
 
     return (
-      <TouchableOpacity
+      <View
         key={period}
-        style={[
-          styles.periodCard,
-          isSelected && styles.selectedPeriodCard
-        ]}
-        onPress={() => setSelectedPeriod(period)}
+        style={styles.periodCard}
       >
         <View style={styles.periodHeader}>
-          <Text style={[
-            styles.periodTitle,
-            isSelected && styles.selectedPeriodTitle
-          ]}>{data.title}</Text>
+          <Text style={styles.periodTitle}>{data.title}</Text>
           <Text style={styles.periodDate}>{data.period}</Text>
         </View>
         
@@ -79,7 +69,7 @@ export const FlightPrices = ({ destination, origin }) => {
             </View>
           ))}
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -132,9 +122,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  selectedPeriodCard: {
-    backgroundColor: theme.colors.primary,
-  },
   periodHeader: {
     marginBottom: 12,
   },
@@ -143,9 +130,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 4,
-  },
-  selectedPeriodTitle: {
-    color: '#fff',
   },
   periodDate: {
     fontSize: 14,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Dimensions, Text } from 'react-native';
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { theme } from '../styles/theme';
@@ -18,26 +18,22 @@ const iconMapping = {
   // Ajoutez d'autres mappings selon vos besoins
 };
 
-export const TripMap = ({ itinerary, style, showFamilyTips = true }) => {
-  // Convertir les coordonnées des points en format pour la carte
-  const coordinates = itinerary?.points?.map(point => ({
-    latitude: point.coordinate.latitude,
-    longitude: point.coordinate.longitude,
-  })) || [];
+export const TripMap = ({ steps, initialRegion, focusedStepIndex }) => {
+  const mapRef = useRef(null);
 
-  // Calculer la région initiale pour englober tous les points
-  const initialRegion = coordinates.length > 0
-    ? {
-        latitude: coordinates.reduce((sum, coord) => sum + coord.latitude, 0) / coordinates.length,
-        longitude: coordinates.reduce((sum, coord) => sum + coord.longitude, 0) / coordinates.length,
-        latitudeDelta: Math.max(
-          ...coordinates.map(coord => Math.abs(coord.latitude - coordinates[0].latitude))
-        ) * 2.5,
-        longitudeDelta: Math.max(
-          ...coordinates.map(coord => Math.abs(coord.longitude - coordinates[0].longitude))
-        ) * 2.5,
-      }
-    : null;
+  useEffect(() => {
+    if (mapRef.current && steps[focusedStepIndex]) {
+      const { coordinate } = steps[focusedStepIndex];
+      mapRef.current.animateToRegion({
+        ...coordinate,
+        latitudeDelta: 2,
+        longitudeDelta: 2,
+      }, 1000);
+    }
+  }, [focusedStepIndex, steps]);
+
+  // Créer un tableau de coordonnées pour la ligne d'itinéraire
+  const coordinates = steps.map(step => step.coordinate);
 
   // Fonction pour obtenir le nom de l'icône Ionicons à partir d'un emoji
   const getIconName = (emoji) => {
@@ -64,8 +60,9 @@ export const TripMap = ({ itinerary, style, showFamilyTips = true }) => {
   }
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         initialRegion={initialRegion}
         showsUserLocation
@@ -73,50 +70,44 @@ export const TripMap = ({ itinerary, style, showFamilyTips = true }) => {
         zoomEnabled
         scrollEnabled
       >
-        {/* Afficher les marqueurs pour chaque point de l'itinéraire */}
-        {itinerary?.points?.map((point, index) => (
+        {/* Ligne d'itinéraire */}
+        <Polyline
+          coordinates={coordinates}
+          strokeColor={theme.colors.primary}
+          strokeWidth={3}
+        />
+
+        {/* Marqueurs pour chaque étape */}
+        {steps.map((step, index) => (
           <Marker
             key={index}
-            coordinate={{
-              latitude: point.coordinate.latitude,
-              longitude: point.coordinate.longitude,
-            }}
-            title={`Jour ${point.day} - ${point.title}`}
-            description={point.description}
-            pinColor={index === 0 ? theme.colors.primary : theme.colors.secondary}
+            coordinate={step.coordinate}
+            title={step.name}
+            description={step.date}
           >
-            <Callout>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>Jour {point.day} - {point.title}</Text>
-                <Text style={styles.calloutDescription}>{point.description}</Text>
-                {point.steps && point.steps.length > 0 && (
-                  <View style={styles.stepsContainer}>
-                    <Text style={styles.stepsTitle}>Programme du jour :</Text>
-                    {point.steps.map((step, stepIndex) => (
-                      <View key={stepIndex} style={styles.stepItem}>
-                        <Ionicons 
-                          name={getIconName(step.icon)} 
-                          size={16} 
-                          color={theme.colors.primary} 
-                        />
-                        <Text style={styles.stepText}>{step.time} - {step.activity}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            </Callout>
+            <View style={[
+              styles.markerContainer,
+              index === focusedStepIndex && styles.markerContainerFocused,
+              step.status === 'past' && styles.markerContainerPast,
+              step.status === 'current' && styles.markerContainerCurrent,
+              step.status === 'upcoming' && styles.markerContainerUpcoming,
+            ]}>
+              <Ionicons
+                name="location"
+                size={24}
+                color={
+                  index === focusedStepIndex
+                    ? '#fff'
+                    : step.status === 'past'
+                    ? '#8E8E93'
+                    : step.status === 'current'
+                    ? '#fff'
+                    : '#666'
+                }
+              />
+            </View>
           </Marker>
         ))}
-
-        {/* Afficher la ligne de l'itinéraire */}
-        {coordinates.length > 1 && (
-          <Polyline
-            coordinates={coordinates}
-            strokeColor={theme.colors.primary}
-            strokeWidth={3}
-          />
-        )}
       </MapView>
 
       {/* Afficher la distance totale */}
@@ -132,51 +123,45 @@ export const TripMap = ({ itinerary, style, showFamilyTips = true }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    borderRadius: 12,
+    height: 300,
+    width: '100%',
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
   map: {
     width: '100%',
     height: '100%',
   },
-  calloutContainer: {
+  markerContainer: {
+    backgroundColor: '#fff',
     padding: 8,
-    maxWidth: 250,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
   },
-  calloutTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.text.dark,
-    marginBottom: 4,
+  markerContainerFocused: {
+    backgroundColor: theme.colors.primary,
+    transform: [{ scale: 1.2 }],
   },
-  calloutDescription: {
-    fontSize: 14,
-    color: theme.colors.text.medium,
-    marginBottom: 8,
+  markerContainerPast: {
+    borderColor: '#8E8E93',
+    backgroundColor: '#fff',
   },
-  stepsContainer: {
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 8,
+  markerContainerCurrent: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
-  stepsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.text.dark,
-    marginBottom: 4,
-  },
-  stepItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  stepText: {
-    fontSize: 12,
-    color: theme.colors.text.medium,
-    marginLeft: 4,
-    flex: 1,
+  markerContainerUpcoming: {
+    borderColor: '#666',
+    backgroundColor: '#fff',
   },
   distanceContainer: {
     position: 'absolute',
