@@ -158,7 +158,6 @@ const Joi = require('joi');
 // Schéma de validation pour la création/mise à jour d'une famille
 const familySchema = Joi.object({
     family_name: Joi.string().min(2).max(255),
-    interests: Joi.array().items(Joi.string()),
     travel_preferences: Joi.object({
         travel_type: Joi.array().items(
             Joi.string().valid(
@@ -172,9 +171,9 @@ const familySchema = Joi.object({
                 'Non spécifié'
             ).required()
         ).single().required(),
-        budget: Joi.string().valid('Économique', 'Modéré', 'Luxe'),
-        accommodation_type: Joi.string().valid('Hôtel', 'Appartement', 'Surprise'),
-        travel_pace: Joi.string().valid('Relaxé', 'Equilibré', 'Actif')
+        budget: Joi.string().valid('Économique', 'Modéré', 'Confort', 'Luxe', 'Non spécifié'),
+        accommodation_type: Joi.string().valid('Hôtel', 'Appartement', 'Surprise', 'Non spécifié'),
+        travel_pace: Joi.string().valid('Relaxé', 'Equilibré', 'Actif', 'Non spécifié')
     })
 });
 
@@ -238,9 +237,9 @@ router.get('/by-device/:device_id', async (req, res) => {
         
         // Récupérer les informations de base de la famille et ses préférences
         const familyResult = await pool.query(`
-            SELECT f.*, ftp.travel_types, ftp.budget, ftp.accommodation_type, ftp.travel_pace 
+            SELECT f.*, fp.travel_type, fp.budget
             FROM families f
-            LEFT JOIN family_travel_preferences ftp ON f.id = ftp.family_id
+            LEFT JOIN family_preferences fp ON f.id = fp.family_id
             WHERE f.device_id = $1
         `, [req.params.device_id]);
 
@@ -256,40 +255,29 @@ router.get('/by-device/:device_id', async (req, res) => {
 
         // Récupérer les membres de la famille
         const membersResult = await pool.query(`
-            SELECT 
-                id,
-                first_name,
-                last_name,
-                role,
-                birth_date
-            FROM family_members
-            WHERE family_id = $1
-            ORDER BY role DESC, birth_date DESC
+            SELECT * FROM family_members 
+            WHERE family_id = $1 
+            ORDER BY role DESC, created_at ASC
         `, [familyResult.rows[0].id]);
 
         console.log("✅ Membres trouvés:", membersResult.rows);
 
-        const family = familyResult.rows[0];
-        const members = membersResult.rows;
+        const family = {
+            ...familyResult.rows[0],
+            travel_preferences: {
+                travel_type: familyResult.rows[0].travel_type || [],
+                budget: familyResult.rows[0].budget || null
+            },
+            members: membersResult.rows
+        };
+
+        // Supprimer les champs en double
+        delete family.travel_type;
+        delete family.budget;
 
         const response = {
             success: true,
-            data: {
-                family_name: family.family_name,
-                members: members.map(member => ({
-                    id: member.id,
-                    first_name: member.first_name,
-                    last_name: member.last_name,
-                    role: member.role,
-                    birth_date: member.birth_date
-                })),
-                travel_preferences: {
-                    travel_type: family.travel_types || [],
-                    budget: family.budget || "Non spécifié",
-                    accommodation_type: family.accommodation_type || "Non spécifié",
-                    travel_pace: family.travel_pace || "Non spécifié"
-                }
-            }
+            data: family
         };
 
         console.log("📤 Réponse envoyée:", response);
@@ -344,13 +332,11 @@ router.post('/by-device/:device_id', validateFamily, async (req, res) => {
         // Ajouter les préférences de voyage si fournies
         if (travel_preferences) {
             await pool.query(
-                `INSERT INTO family_travel_preferences (family_id, travel_types, budget, accommodation_type, travel_pace)
-                 VALUES ($1, $2, $3, $4, $5)`,
+                `INSERT INTO family_preferences (family_id, travel_type, budget)
+                 VALUES ($1, $2, $3)`,
                 [familyId, 
                  travel_preferences.travel_type,
-                 travel_preferences.budget,
-                 travel_preferences.accommodation_type,
-                 travel_preferences.travel_pace]
+                 travel_preferences.budget]
             );
         }
 
@@ -444,28 +430,39 @@ router.put('/by-device/:device_id', validateFamily, async (req, res) => {
                 : [travel_preferences.travel_type];
 
             console.log('ℹ️ [PUT /by-device] Types de voyage reçus:', travelTypes);
+            console.log('ℹ️ [PUT /by-device] Budget reçu:', travel_preferences.budget);
+            console.log('ℹ️ [PUT /by-device] Type d\'hébergement reçu:', travel_preferences.accommodation_type);
+            console.log('ℹ️ [PUT /by-device] Rythme de voyage reçu:', travel_preferences.travel_pace);
 
             // Vérifier les préférences existantes
             const existingPrefs = await pool.query(
-                'SELECT * FROM family_travel_preferences WHERE family_id = $1',
+                'SELECT * FROM family_preferences WHERE family_id = $1',
                 [familyId]
             );
             console.log('ℹ️ [PUT /by-device] Préférences existantes:', existingPrefs.rows[0]);
 
             await pool.query(
-                `INSERT INTO family_travel_preferences (family_id, travel_types, budget, accommodation_type, travel_pace)
-                 VALUES ($1, $2, $3, $4, $5)
-                 ON CONFLICT (family_id) DO UPDATE
-                 SET travel_types = $2,
-                     budget = $3,
-                     accommodation_type = $4,
-                     travel_pace = $5
-                 RETURNING *`,
-                [familyId, 
-                 travelTypes,
-                 travel_preferences.budget,
-                 travel_preferences.accommodation_type,
-                 travel_preferences.travel_pace]
+                `INSERT INTO family_preferences (
+                    family_id, 
+                    travel_type, 
+                    budget,
+                    accommodation_type,
+                    travel_pace
+                )
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (family_id) DO UPDATE
+                SET travel_type = $2,
+                    budget = $3,
+                    accommodation_type = $4,
+                    travel_pace = $5
+                RETURNING *`,
+                [
+                    familyId, 
+                    travelTypes,
+                    travel_preferences.budget,
+                    travel_preferences.accommodation_type,
+                    travel_preferences.travel_pace
+                ]
             ).then(result => {
                 console.log('✅ [PUT /by-device] Préférences mises à jour:', result.rows[0]);
             });

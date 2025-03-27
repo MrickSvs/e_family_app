@@ -163,7 +163,7 @@ router.post('/onboarding', validateOnboarding, async (req, res) => {
         console.log("ℹ️ [onboarding] Budget:", travel_preferences.budget);
         
         await pool.query(`
-            INSERT INTO family_travel_preferences (family_id, travel_types, budget)
+            INSERT INTO family_preferences (family_id, travel_type, budget)
             VALUES ($1, $2, $3)
         `, [
             familyId,

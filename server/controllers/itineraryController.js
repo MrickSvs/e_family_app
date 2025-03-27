@@ -35,13 +35,13 @@ const getItineraries = async (req, res) => {
 
         // Récupérer les préférences de voyage de la famille
         const preferencesResult = await pool.query(
-            'SELECT travel_types FROM family_travel_preferences WHERE family_id = $1',
+            'SELECT travel_type FROM family_preferences WHERE family_id = $1',
             [family_id]
         );
 
         console.log('🎯 Préférences de voyage de la famille:', preferencesResult.rows[0]);
 
-        const familyTravelTypes = preferencesResult.rows[0]?.travel_types || [];
+        const familyTravelTypes = preferencesResult.rows[0]?.travel_type || [];
 
         let query = `
             SELECT i.*

@@ -71,18 +71,19 @@ const getFamilyPreferences = async (req, res) => {
     try {
         const { family_id } = req.params;
         const result = await pool.query(`
-            SELECT tp.name, tp.category, tp.icon,
-                   pv.value, pv.description as value_description, pv.icon as value_icon
-            FROM family_travel_preferences ftp
-            JOIN travel_preferences tp ON ftp.preference_id = tp.id
-            JOIN preference_values pv ON ftp.value_id = pv.id
-            WHERE ftp.family_id = $1
-            ORDER BY tp.category, tp.name
+            SELECT travel_type, budget, accommodation_type, travel_pace
+            FROM family_preferences
+            WHERE family_id = $1
         `, [family_id]);
 
         res.json({
             success: true,
-            data: result.rows
+            data: result.rows[0] || { 
+                travel_type: [], 
+                budget: null,
+                accommodation_type: null,
+                travel_pace: null
+            }
         });
     } catch (error) {
         console.error('❌ Erreur lors de la récupération des préférences de la famille:', error);
@@ -99,19 +100,17 @@ const getFamilyPreferences = async (req, res) => {
 const updateFamilyPreferences = async (req, res) => {
     try {
         const { family_id } = req.params;
-        const { preferences } = req.body;
+        const { travel_type, budget, accommodation_type, travel_pace } = req.body;
 
-        // Supprimer les anciennes préférences
-        await pool.query('DELETE FROM family_travel_preferences WHERE family_id = $1', [family_id]);
-
-        // Insérer les nouvelles préférences
-        for (const pref of preferences) {
-            await pool.query(
-                `INSERT INTO family_travel_preferences (family_id, preference_id, value_id)
-                 VALUES ($1, $2, $3)`,
-                [family_id, pref.preference_id, pref.value_id]
-            );
-        }
+        await pool.query(`
+            INSERT INTO family_preferences (family_id, travel_type, budget, accommodation_type, travel_pace)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (family_id) DO UPDATE
+            SET travel_type = $2,
+                budget = $3,
+                accommodation_type = $4,
+                travel_pace = $5
+        `, [family_id, travel_type, budget, accommodation_type, travel_pace]);
 
         res.json({
             success: true,
@@ -122,6 +121,45 @@ const updateFamilyPreferences = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Erreur lors de la mise à jour des préférences"
+        });
+    }
+};
+
+/**
+ * Récupère les options disponibles pour les préférences
+ */
+const getPreferenceOptions = async (req, res) => {
+    try {
+        // Retourner les options prédéfinies directement
+        const options = {
+            travel_types: [
+                { value: 'Découverte', label: 'Découverte', icon: 'compass' },
+                { value: 'Aventure', label: 'Aventure', icon: 'mountain' },
+                { value: 'Détente', label: 'Détente', icon: 'umbrella' },
+                { value: 'Culture', label: 'Culture', icon: 'museum' },
+                { value: 'Nature', label: 'Nature', icon: 'tree' },
+                { value: 'Plage', label: 'Plage', icon: 'beach' },
+                { value: 'Sport', label: 'Sport', icon: 'sports' },
+                { value: 'Non spécifié', label: 'Non spécifié', icon: 'question-mark' }
+            ],
+            budgets: [
+                { value: 'Économique', label: 'Économique', icon: 'wallet' },
+                { value: 'Modéré', label: 'Modéré', icon: 'wallet' },
+                { value: 'Confort', label: 'Confort', icon: 'wallet' },
+                { value: 'Luxe', label: 'Luxe', icon: 'wallet' },
+                { value: 'Non spécifié', label: 'Non spécifié', icon: 'question-mark' }
+            ]
+        };
+
+        res.json({
+            success: true,
+            data: options
+        });
+    } catch (error) {
+        console.error('❌ Erreur lors de la récupération des options:', error);
+        res.status(500).json({
+            success: false,
+            message: "Erreur lors de la récupération des options"
         });
     }
 };
@@ -215,6 +253,7 @@ module.exports = {
     getTravelPreferences,
     getFamilyPreferences,
     updateFamilyPreferences,
+    getPreferenceOptions,
     addItineraryTags,
     getItineraryTags
 }; 
