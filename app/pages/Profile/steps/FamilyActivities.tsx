@@ -17,6 +17,7 @@ interface ActivitiesData {
     budget: string;
     accommodation_type: string;
     travel_pace: string;
+    travel_experience: string[];
   };
 }
 
@@ -50,6 +51,14 @@ const getAllUniqueActivities = () => {
   ]);
   return Array.from(allActivities);
 };
+
+const TRAVEL_EXPERIENCE_LEVELS = [
+  { id: 'Débutant', label: 'Débutant', icon: '🌱' },
+  { id: 'Intermédiaire', label: 'Intermédiaire', icon: '🌿' },
+  { id: 'Expert', label: 'Expert', icon: '🌳' },
+  { id: 'Aventureux', label: 'Aventureux', icon: '🏃‍♂️' },
+  { id: 'Prudent', label: 'Prudent', icon: '🛡️' }
+];
 
 export const FamilyActivities = ({
   data,
@@ -102,21 +111,14 @@ export const FamilyActivities = ({
     // Log des données avant la conversion
     console.log('Données avant conversion:', formData);
 
-    // Créer un nouvel objet travel_preferences sans écraser les données existantes
-    const travel_preferences = {
-      travel_type: formData.preferred, // Utiliser uniquement les nouvelles préférences
-      budget: formData.travel_preferences?.budget || 'Non spécifié',
-      accommodation_type: formData.travel_preferences?.accommodation_type || 'Non spécifié',
-      travel_pace: formData.travel_preferences?.travel_pace || 'Non spécifié'
-    };
-    
-    // Log des travel_preferences
-    console.log('Travel preferences après conversion:', travel_preferences);
-
+    // Préserver les travel_preferences existants
     const updatedData = {
       preferred: formData.preferred,
       excluded: formData.excluded,
-      travel_preferences
+      travel_preferences: {
+        ...formData.travel_preferences,
+        travel_type: formData.preferred,
+      }
     };
 
     // Log des données finales
@@ -198,13 +200,69 @@ export const FamilyActivities = ({
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Activités préférées</Text>
-      <Text style={styles.subtitle}>
-        Sélectionnez les activités que votre famille aime ou n'aime pas
-      </Text>
+      <Text style={styles.title}>Activités et préférences</Text>
 
-      {renderActivitySection('Activités en plein air', activities.outdoor)}
-      {renderActivitySection('Activités d\'intérieur', activities.indoor)}
+      {/* Section Expérience de voyage */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Expérience de voyage</Text>
+        <View style={styles.chipContainer}>
+          {TRAVEL_EXPERIENCE_LEVELS.map((level) => (
+            <TouchableOpacity
+              key={level.id}
+              style={[
+                styles.activityChip,
+                formData.travel_preferences?.travel_experience?.includes(level.id) && styles.preferredChip,
+              ]}
+              onPress={() => {
+                const newExperiences = formData.travel_preferences?.travel_experience?.includes(level.id)
+                  ? formData.travel_preferences.travel_experience.filter(e => e !== level.id)
+                  : [...(formData.travel_preferences?.travel_experience || []), level.id];
+                setFormData(prev => ({
+                  ...prev,
+                  travel_preferences: {
+                    ...prev.travel_preferences,
+                    travel_experience: newExperiences,
+                  },
+                }));
+              }}
+            >
+              <Text style={[
+                styles.activityText,
+                formData.travel_preferences?.travel_experience?.includes(level.id) && styles.preferredText,
+              ]}>
+                {`${level.icon} ${level.label}`}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Section Activités préférées */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Activités préférées</Text>
+        <View style={styles.activityContainer}>
+          {getAllUniqueActivities().map((activity) => (
+            <View key={activity} style={styles.activityWrapper}>
+              <TouchableOpacity
+                style={[
+                  styles.activityChip,
+                  formData.preferred.includes(activity) && styles.preferredChip,
+                  formData.excluded.includes(activity) && styles.excludedChip,
+                ]}
+                onPress={() => toggleActivity(activity, 'preferred')}
+              >
+                <Text style={[
+                  styles.activityText,
+                  formData.preferred.includes(activity) && styles.preferredText,
+                  formData.excluded.includes(activity) && styles.excludedText,
+                ]}>
+                  {activity}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -329,5 +387,10 @@ const styles = StyleSheet.create({
   },
   buttonTextSecondary: {
     color: '#0f8066',
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
   },
 }); 

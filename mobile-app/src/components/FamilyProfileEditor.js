@@ -31,6 +31,14 @@ const BUDGET_RANGES = [
   { id: 'luxury', label: 'Luxe', description: '> 2000€/pers' },
 ];
 
+const TRAVEL_EXPERIENCE_LEVELS = [
+  { id: 'Débutant', label: 'Débutant', icon: '🌱' },
+  { id: 'Intermédiaire', label: 'Intermédiaire', icon: '🌿' },
+  { id: 'Expert', label: 'Expert', icon: '🌳' },
+  { id: 'Aventureux', label: 'Aventureux', icon: '🏃‍♂️' },
+  { id: 'Prudent', label: 'Prudent', icon: '🛡️' }
+];
+
 export const FamilyProfileEditor = ({ member, onSave }) => {
   const { colors } = useTheme();
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -53,6 +61,7 @@ export const FamilyProfileEditor = ({ member, onSave }) => {
       accommodation_type: member?.travel_preferences?.accommodation_type || [],
       transport_preferences: member?.travel_preferences?.transport_preferences || [],
       travel_pace: member?.travel_preferences?.travel_pace || 'moderate',
+      travel_experience: member?.travel_preferences?.travel_experience || [],
     },
     important_dates: member?.important_dates || [],
   });
@@ -138,6 +147,33 @@ export const FamilyProfileEditor = ({ member, onSave }) => {
                 style={styles.chip}
               >
                 {`${type.icon} ${type.label}`}
+              </Chip>
+            ))}
+          </View>
+        </View>
+
+        {/* Section Expérience de voyage */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Expérience de voyage</Text>
+          <View style={styles.chipContainer}>
+            {TRAVEL_EXPERIENCE_LEVELS.map((level) => (
+              <Chip
+                key={level.id}
+                selected={formData.travel_preferences.travel_experience.includes(level.id)}
+                onPress={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    travel_preferences: {
+                      ...prev.travel_preferences,
+                      travel_experience: prev.travel_preferences.travel_experience.includes(level.id)
+                        ? prev.travel_preferences.travel_experience.filter(id => id !== level.id)
+                        : [...prev.travel_preferences.travel_experience, level.id],
+                    },
+                  }));
+                }}
+                style={styles.chip}
+              >
+                {`${level.icon} ${level.label}`}
               </Chip>
             ))}
           </View>

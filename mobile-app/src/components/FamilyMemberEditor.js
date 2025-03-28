@@ -79,7 +79,6 @@ export const FamilyMemberEditor = ({ member, visible, onSave, onClose }) => {
     preferred_activities: member?.preferred_activities || [],
     // Préférences spécifiques pour les adultes
     adult_preferences: member?.adult_preferences || {
-      travel_experience: [],
       interests: [],
       comfort_level: '',
     },
@@ -217,37 +216,6 @@ export const FamilyMemberEditor = ({ member, visible, onSave, onClose }) => {
               {formData.role === 'Adulte' && (
                 <View style={styles.preferencesSection}>
                   <Text style={styles.sectionTitle}>Préférences de voyage</Text>
-
-                  <Text style={styles.label}>Expérience de voyage</Text>
-                  <View style={styles.chipContainer}>
-                    {TRAVEL_EXPERIENCES.map((exp) => (
-                      <TouchableOpacity
-                        key={exp}
-                        style={[
-                          styles.chip,
-                          formData.adult_preferences.travel_experience.includes(exp) && styles.chipSelected
-                        ]}
-                        onPress={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            adult_preferences: {
-                              ...prev.adult_preferences,
-                              travel_experience: prev.adult_preferences.travel_experience.includes(exp)
-                                ? prev.adult_preferences.travel_experience.filter(e => e !== exp)
-                                : [...prev.adult_preferences.travel_experience, exp]
-                            }
-                          }));
-                        }}
-                      >
-                        <Text style={[
-                          styles.chipText,
-                          formData.adult_preferences.travel_experience.includes(exp) && styles.chipTextSelected
-                        ]}>
-                          {exp}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
 
                   <Text style={styles.label}>Centres d'intérêt</Text>
                   <View style={styles.chipContainer}>

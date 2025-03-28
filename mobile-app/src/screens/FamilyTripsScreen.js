@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View, TouchableOpacity, Text, Image } from "react-native";
+import { SafeAreaView, ScrollView, ActivityIndicator, StyleSheet, View, TouchableOpacity, Text, Image, TextInput } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { getFamilyInfo } from "../services/familyService";
 import { getItineraries } from "../services/itineraryService";
@@ -46,7 +46,7 @@ const DestinationsSection = ({ destinations, onDestinationPress }) => {
 
   return (
     <View style={styles.destinationsSection}>
-      <Text style={styles.sectionTitle}>Destinations conseillées</Text>
+      <Text style={styles.sectionTitle}>Destinations qui vous correspondent</Text>
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
@@ -73,11 +73,28 @@ const DestinationsSection = ({ destinations, onDestinationPress }) => {
   );
 };
 
+const SearchBar = ({ onSearch }) => {
+  return (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={20} color="#666666" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher une destination..."
+          placeholderTextColor="#666666"
+          onChangeText={onSearch}
+        />
+      </View>
+    </View>
+  );
+};
+
 export default function FamilyTripsScreen() {
   const navigation = useNavigation();
   const [familyData, setFamilyData] = useState(null);
   const [itineraries, setItineraries] = useState([]);
   const [destinations, setDestinations] = useState([]);
+  const [filteredDestinations, setFilteredDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -133,6 +150,23 @@ export default function FamilyTripsScreen() {
     }
   };
 
+  const handleSearch = (text) => {
+    if (!text.trim()) {
+      setFilteredDestinations(destinations);
+      return;
+    }
+    
+    const filtered = destinations.filter(destination =>
+      destination.name.toLowerCase().includes(text.toLowerCase()) ||
+      destination.description.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredDestinations(filtered);
+  };
+
+  useEffect(() => {
+    setFilteredDestinations(destinations);
+  }, [destinations]);
+
   // Charger les données au montage du composant
   useEffect(() => {
     fetchData();
@@ -179,17 +213,19 @@ export default function FamilyTripsScreen() {
         <FamilyHeader family={familyData} />
       </View>
 
+      <SearchBar onSearch={handleSearch} />
+
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
         <DestinationsSection 
-          destinations={destinations}
+          destinations={filteredDestinations}
           onDestinationPress={(destination) => navigation.navigate('DestinationDetail', { destination })}
         />
 
         <View style={styles.itinerariesSection}>
-          <Text style={styles.sectionTitle}>Itinéraires conseillés</Text>
+          <Text style={styles.sectionTitle}>Vos itinéraires personnalisés</Text>
           {itineraries.map((itinerary) => (
             <TripCard
               key={itinerary.id}
@@ -199,7 +235,7 @@ export default function FamilyTripsScreen() {
                 duration: `${itinerary.duration} jours`,
                 type: itinerary.type,
                 description: itinerary.description,
-                imageUrl: itinerary.image_url,
+                image_url: itinerary.image_url,
                 tags: itinerary.tags,
                 price: itinerary.price
               }}
@@ -351,5 +387,31 @@ const styles = StyleSheet.create({
   },
   itinerariesSection: {
     marginTop: 24,
+  },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#F7F5ED',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333333',
   },
 });

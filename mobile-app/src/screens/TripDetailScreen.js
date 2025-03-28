@@ -30,6 +30,23 @@ const HERO_HEIGHT = 400;
 const CARD_WIDTH = width - 48;
 const CARD_MARGIN = 8;
 
+// Mapping des emojis vers les icônes Ionicons
+const iconMapping = {
+  '⛵': 'boat-outline',
+  '🍽️': 'restaurant-outline',
+  '🛥️': 'boat-outline',
+  '🏖️': 'sunny-outline',
+  '🤿': 'water-outline',
+  '🚶': 'walk-outline',
+  '🏁': 'flag-outline',
+  '🏨': 'bed-outline',
+  '🍜': 'restaurant-outline',
+  '🚲': 'bicycle-outline',
+  '🎨': 'color-palette-outline',
+  '🚢': 'boat-outline',
+  '🦑': 'fish-outline',
+};
+
 export default function TripDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -121,7 +138,7 @@ export default function TripDetailScreen() {
 
   const renderHeroSection = () => (
     <Animated.View style={[styles.heroSection, { transform: [{ scale: heroScale }] }]}>
-      <Image source={{ uri: trip.imageUrl }} style={styles.coverImage} />
+      <Image source={{ uri: trip.image_url }} style={styles.coverImage} />
       <View style={styles.heroContent}>
         <Text style={styles.title}>{trip.title}</Text>
         <View style={styles.mainInfo}>
@@ -314,29 +331,6 @@ export default function TripDetailScreen() {
     );
   };
 
-  const renderPracticalInfo = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Informations pratiques</Text>
-      <View style={styles.practicalInfoGrid}>
-        <View style={styles.practicalInfoItem}>
-          <Ionicons name="bed-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.practicalInfoLabel}>Hébergement</Text>
-          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.accommodation}</Text>
-        </View>
-        <View style={styles.practicalInfoItem}>
-          <Ionicons name="restaurant-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.practicalInfoLabel}>Repas</Text>
-          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.meals}</Text>
-        </View>
-        <View style={styles.practicalInfoItem}>
-          <Ionicons name="bus-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.practicalInfoLabel}>Transport</Text>
-          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.transport}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
   const renderDetailedItinerary = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Itinéraire détaillé</Text>
@@ -355,7 +349,11 @@ export default function TripDetailScreen() {
             <Text style={styles.dayDescription}>{day.description}</Text>
             {day.steps?.slice(0, 3).map((step, stepIndex) => (
               <View key={stepIndex} style={styles.stepItem}>
-                <Ionicons name={step.icon || "time-outline"} size={16} color="#666" />
+                <Ionicons 
+                  name={iconMapping[step.icon] || step.icon || "time-outline"} 
+                  size={16} 
+                  color="#666" 
+                />
                 <Text style={styles.stepText}>{step.time} - {step.activity}</Text>
               </View>
             ))}
@@ -378,7 +376,6 @@ export default function TripDetailScreen() {
         {renderImageCarousel()}
         {renderInteractiveMap()}
         {renderDetailedItinerary()}
-        {renderPracticalInfo()}
         <LocalTips 
           familyProfile={trip.familyProfile}
           destination={trip.destination}

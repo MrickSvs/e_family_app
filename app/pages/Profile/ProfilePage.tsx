@@ -28,6 +28,13 @@ export const ProfilePage = () => {
     activities: {
       preferred: [],
       excluded: [],
+      travel_preferences: {
+        travel_type: [],
+        budget: 'Non spécifié',
+        accommodation_type: 'Non spécifié',
+        travel_pace: 'Non spécifié',
+        travel_experience: []
+      }
     },
   });
 

@@ -15,6 +15,12 @@ const iconMapping = {
   '🤿': 'water-outline',
   '🚶': 'walk-outline',
   '🏁': 'flag-outline',
+  '🏨': 'bed-outline',
+  '🍜': 'restaurant-outline',
+  '🚲': 'bicycle-outline',
+  '🎨': 'color-palette-outline',
+  '🚢': 'boat-outline',
+  '🦑': 'fish-outline',
   // Ajoutez d'autres mappings selon vos besoins
 };
 
@@ -96,7 +102,7 @@ export const TripMap = ({ steps = [], initialRegion, focusedStepIndex = 0 }) => 
               step.status === 'upcoming' && styles.markerContainerUpcoming,
             ]}>
               <Ionicons
-                name="location"
+                name={iconMapping[step.icon] || "location"}
                 size={24}
                 color={
                   index === focusedStepIndex

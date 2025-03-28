@@ -23,6 +23,23 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // Largeur de la carte avec marges
 const CARD_MARGIN = 8;
 
+// Mapping des emojis vers les icônes Ionicons
+const iconMapping = {
+  '⛵': 'boat-outline',
+  '🍽️': 'restaurant-outline',
+  '🛥️': 'boat-outline',
+  '🏖️': 'sunny-outline',
+  '🤿': 'water-outline',
+  '🚶': 'walk-outline',
+  '🏁': 'flag-outline',
+  '🏨': 'bed-outline',
+  '🍜': 'restaurant-outline',
+  '🚲': 'bicycle-outline',
+  '🎨': 'color-palette-outline',
+  '🚢': 'boat-outline',
+  '🦑': 'fish-outline',
+};
+
 // Données mockées pour le développement
 const MOCK_TRIP_STEPS = [
   {
@@ -167,7 +184,11 @@ export default function CurrentTripDetailScreen() {
         <Text style={styles.dayProgramTitle}>Programme du jour</Text>
         {item.program.map((activity, idx) => (
           <View key={idx} style={styles.dayProgramItem}>
-            <Ionicons name={activity.icon} size={16} color={theme.colors.primary} />
+            <Ionicons 
+              name={iconMapping[activity.icon] || activity.icon || "time-outline"} 
+              size={16} 
+              color={theme.colors.primary} 
+            />
             <Text style={styles.dayProgramText}>{activity.time} - {activity.activity}</Text>
           </View>
         ))}

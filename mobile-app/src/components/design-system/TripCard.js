@@ -34,7 +34,7 @@ export const TripCard = ({
       activeOpacity={0.9}
     >
       <Image 
-        source={{ uri: trip.imageUrl }} 
+        source={{ uri: trip.image_url }} 
         style={styles.image}
         resizeMode="cover"
       />

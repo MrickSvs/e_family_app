@@ -19,7 +19,7 @@ export default function MyTripsScreen() {
       id: 1,
       title: "Costa Rica en famille",
       date: "En cours",
-      imageUrl: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/08/03/6d2d255d-c122-4ef7-99ab-80624f563bb6.jpg",
+      image_url: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/08/03/6d2d255d-c122-4ef7-99ab-80624f563bb6.jpg",
       progress: 60,
       description: "Découverte du Costa Rica en famille : volcans, plages paradisiaques et forêts tropicales",
       duration: "10 jours",
@@ -99,7 +99,7 @@ export default function MyTripsScreen() {
       id: 4,
       title: "Découverte du Japon",
       date: "Avril 2023",
-      imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
+      image_url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e",
       rating: 5,
       description: "Un voyage culturel au pays du soleil levant",
       duration: "12 jours",
@@ -171,7 +171,7 @@ export default function MyTripsScreen() {
         style={[styles.tripCard, isPending && styles.pendingCard]}
         onPress={() => navigateToTripDetail(trip, type)}
       >
-        <Image source={{ uri: trip.imageUrl }} style={styles.tripImage} />
+        <Image source={{ uri: trip.image_url }} style={styles.tripImage} />
         <View style={styles.tripInfo}>
           <Text style={styles.tripTitle}>{trip.title}</Text>
           <Text style={styles.tripDate}>{trip.date}</Text>
