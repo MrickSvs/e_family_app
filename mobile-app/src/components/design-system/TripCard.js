@@ -6,11 +6,27 @@ const { width } = Dimensions.get('window');
 const CARD_MARGIN = 16;
 const CARD_WIDTH = width - (CARD_MARGIN * 2);
 
+// Fonction pour générer aléatoirement les membres qui aiment l'itinéraire
+const getRandomLikingMembers = (members, minCount = 2) => {
+  if (!members || members.length === 0) return [];
+  
+  // Mélanger les membres
+  const shuffled = [...members].sort(() => 0.5 - Math.random());
+  // Prendre un nombre aléatoire de membres entre minCount et le nombre total de membres
+  const maxCount = members.length;
+  const count = Math.floor(Math.random() * (maxCount - minCount + 1)) + minCount;
+  return shuffled.slice(0, count);
+};
+
 export const TripCard = ({
   trip,
   onPress,
   style,
+  familyMembers = [], // Ajout des membres de la famille
 }) => {
+  // Générer aléatoirement les membres qui aiment l'itinéraire
+  const likingMembers = getRandomLikingMembers(familyMembers);
+
   return (
     <TouchableOpacity 
       style={[styles.container, style]}
@@ -25,9 +41,23 @@ export const TripCard = ({
       <View style={styles.content}>
         <View style={styles.titleContainer}>
           <Text style={styles.title} numberOfLines={2}>{trip.title}</Text>
-          <Text style={styles.info}>
-            {trip.duration} • {trip.type}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.info}>
+              {trip.duration} • {trip.type}
+            </Text>
+            {likingMembers.length > 0 && (
+              <View style={styles.likingMembersContainer}>
+                <Text style={styles.likingText}>Ils vont aimer :</Text>
+                {likingMembers.map((member, index) => (
+                  <View key={member.id} style={styles.memberInitial}>
+                    <Text style={styles.memberInitialText}>
+                      {member.first_name.charAt(0)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
         
         <Text style={styles.description} numberOfLines={2}>
@@ -102,9 +132,41 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 24,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   info: {
     fontSize: 14,
     color: '#666',
+  },
+  likingMembersContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F8F8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  likingText: {
+    fontSize: 12,
+    color: '#666',
+    marginRight: 8,
+  },
+  memberInitial: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  memberInitialText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   description: {
     fontSize: 16,

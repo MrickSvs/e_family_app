@@ -40,10 +40,10 @@ export const LocalTips = ({ familyProfile, destination }) => {
   const renderTipSection = (section) => {
     const data = tips[section];
     return (
-      <View style={styles.section}>
+      <View key={section} style={styles.section}>
         <Text style={styles.sectionTitle}>{data.title}</Text>
         {data.tips.map((tip, index) => (
-          <View key={index} style={styles.tipCard}>
+          <View key={`${section}-${index}`} style={styles.tipCard}>
             <Text style={styles.tipText}>{tip}</Text>
           </View>
         ))}

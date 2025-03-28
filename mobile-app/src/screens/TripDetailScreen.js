@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   SafeAreaView,
   View,
@@ -11,6 +11,7 @@ import {
   Alert,
   Animated,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,6 +21,7 @@ import { FlightPrices } from "../components/FlightPrices";
 import AgencyBlock from "../components/AgencyBlock";
 import CreateTripModal from "../components/CreateTripModal";
 import { getProfile } from "../services/profileService";
+import { getItineraryById } from "../services/itineraryService";
 import { theme } from "../styles/theme";
 
 const { width } = Dimensions.get("window");
@@ -31,13 +33,47 @@ const CARD_MARGIN = 8;
 export default function TripDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { trip, isPast } = route.params;
+  const { trip: initialTrip, isPast } = route.params;
+  console.log('🚀 TripDetailScreen - Initial Trip:', initialTrip);
+  const [trip, setTrip] = useState(initialTrip);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showCreateTripModal, setShowCreateTripModal] = useState(false);
   const [familyMembers, setFamilyMembers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingItinerary, setLoadingItinerary] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
+
+  useEffect(() => {
+    const loadItineraryDetails = async () => {
+      if (!initialTrip.id) {
+        console.log('❌ TripDetailScreen - Pas d\'ID d\'itinéraire fourni');
+        return;
+      }
+      
+      try {
+        console.log('📡 TripDetailScreen - Début du chargement des détails pour l\'itinéraire:', initialTrip.id);
+        setLoadingItinerary(true);
+        const itineraryDetails = await getItineraryById(initialTrip.id);
+        console.log('✅ TripDetailScreen - Détails de l\'itinéraire reçus:', itineraryDetails);
+        setTrip(itineraryDetails);
+
+        // Charger les membres de la famille en parallèle
+        const profile = await getProfile();
+        console.log('✅ TripDetailScreen - Profil famille reçu:', profile);
+        setFamilyMembers(profile.members || []);
+
+      } catch (error) {
+        console.error('❌ TripDetailScreen - Erreur lors du chargement des détails:', error);
+        Alert.alert('Erreur', 'Impossible de charger les détails de l\'itinéraire');
+      } finally {
+        setLoadingItinerary(false);
+        console.log('🏁 TripDetailScreen - Chargement terminé');
+      }
+    };
+
+    loadItineraryDetails();
+  }, [initialTrip.id]);
 
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, HERO_HEIGHT - HEADER_HEIGHT],
@@ -50,25 +86,6 @@ export default function TripDetailScreen() {
     outputRange: [1.2, 1, 0.8],
     extrapolate: 'clamp',
   });
-
-  // Charger les membres de la famille
-  const loadFamilyMembers = async () => {
-    try {
-      setLoading(true);
-      const profile = await getProfile();
-      setFamilyMembers(profile.members || []);
-    } catch (error) {
-      console.error("Erreur lors du chargement des membres:", error);
-      Alert.alert('Erreur', 'Impossible de charger les membres de la famille');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateTrip = () => {
-    loadFamilyMembers();
-    setShowCreateTripModal(true);
-  };
 
   const renderHeader = () => (
     <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
@@ -173,6 +190,153 @@ export default function TripDetailScreen() {
     </View>
   );
 
+  const renderPersonalizedRecommendations = () => {
+    if (!familyMembers || familyMembers.length === 0) return null;
+
+    const getPersonalizedRecommendation = (member) => {
+      const isChild = member.role === 'Enfant';
+      const age = member.birth_date ? Math.floor((new Date() - new Date(member.birth_date)) / (1000 * 60 * 60 * 24 * 365.25)) : null;
+      
+      // Générer des recommandations personnalisées basées sur le profil
+      let recommendations = [];
+      
+      if (isChild) {
+        if (age < 5) {
+          recommendations.push("Des espaces de jeux sécurisés en pleine nature pour s'émerveiller et explorer");
+          recommendations.push("Des mini-aventures sensorielles adaptées aux tout-petits");
+          recommendations.push("Des hébergements cosy avec tout le confort pour les siestes");
+        } else if (age < 12) {
+          recommendations.push("Des ateliers créatifs pour découvrir les traditions locales comme un petit explorateur");
+          recommendations.push("Des chasses aux trésors et jeux de piste pour une découverte ludique des sites");
+          recommendations.push("Des activités nature pour devenir un véritable petit aventurier");
+        } else {
+          recommendations.push("Des spots incontournables pour des photos Instagram dignes d'un influenceur voyage");
+          recommendations.push("Des activités fun et sensations pour épater les copains");
+          recommendations.push("Des moments cool entre ados pour créer des souvenirs inoubliables");
+        }
+      } else {
+        if (member.preferred_activities?.length > 0) {
+          recommendations.push(`Vos passions au cœur du voyage : ${member.preferred_activities.join(', ')}`);
+        }
+        recommendations.push("Des expériences authentiques pour s'immerger dans la culture locale");
+        recommendations.push("Des moments privilégiés pour se reconnecter et partager en famille");
+      }
+
+      // Ajouter des recommandations basées sur les restrictions alimentaires
+      if (member.dietary_restrictions) {
+        recommendations.push(`Une sélection de restaurants locaux adaptés à vos préférences alimentaires`);
+      }
+
+      return recommendations;
+    };
+
+    const renderMemberCard = ({ item: member, index }) => (
+      <View style={styles.memberRecommendation}>
+        <View style={styles.memberHeader}>
+          <View style={styles.memberAvatar}>
+            <Text style={styles.memberInitials}>
+              {member.first_name?.[0]}{member.last_name?.[0] || ''}
+            </Text>
+          </View>
+          <View style={styles.memberInfo}>
+            <Text style={styles.memberName}>{member.first_name}</Text>
+          </View>
+        </View>
+        <View style={styles.recommendationsList}>
+          {getPersonalizedRecommendation(member).map((recommendation, recIndex) => (
+            <View key={recIndex} style={styles.recommendationItem}>
+              <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} style={styles.recommendationIcon} />
+              <Text style={styles.recommendationText}>{recommendation}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Ce que chacun va aimer</Text>
+        <FlatList
+          data={familyMembers}
+          renderItem={renderMemberCard}
+          keyExtractor={(item, index) => item.id || index.toString()}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={width - 56} // 24 padding on each side + 4 margin
+          decelerationRate="fast"
+          contentContainerStyle={styles.recommendationsCarousel}
+          ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
+        />
+      </View>
+    );
+  };
+
+  const renderInteractiveMap = () => {
+    // Transformer les points d'itinéraire en étapes pour la carte
+    const steps = trip.points?.map((point, index) => ({
+      coordinate: {
+        latitude: point.latitude,
+        longitude: point.longitude
+      },
+      name: point.title,
+      date: point.day ? `Jour ${point.day}` : '',
+      status: 'upcoming',
+      description: point.description,
+      imageUrl: point.imageUrl
+    })) || [];
+
+    // Calculer la région initiale de la carte
+    const initialRegion = steps.length > 0 ? {
+      latitude: steps[0].coordinate.latitude,
+      longitude: steps[0].coordinate.longitude,
+      latitudeDelta: 2,
+      longitudeDelta: 2,
+    } : null;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Carte interactive</Text>
+        <View style={styles.mapContainer}>
+          <TripMap 
+            steps={steps}
+            initialRegion={initialRegion}
+            focusedStepIndex={0}
+          />
+          <TouchableOpacity 
+            style={styles.mapButton}
+            onPress={() => navigation.navigate('FullMap', { itinerary: trip })}
+          >
+            <Ionicons name="expand-outline" size={24} color="#fff" />
+            <Text style={styles.mapButtonText}>Voir la carte complète</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const renderPracticalInfo = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Informations pratiques</Text>
+      <View style={styles.practicalInfoGrid}>
+        <View style={styles.practicalInfoItem}>
+          <Ionicons name="bed-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.practicalInfoLabel}>Hébergement</Text>
+          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.accommodation}</Text>
+        </View>
+        <View style={styles.practicalInfoItem}>
+          <Ionicons name="restaurant-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.practicalInfoLabel}>Repas</Text>
+          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.meals}</Text>
+        </View>
+        <View style={styles.practicalInfoItem}>
+          <Ionicons name="bus-outline" size={24} color={theme.colors.primary} />
+          <Text style={styles.practicalInfoLabel}>Transport</Text>
+          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.transport}</Text>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderDetailedItinerary = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Itinéraire détaillé</Text>
@@ -204,55 +368,13 @@ export default function TripDetailScreen() {
     </View>
   );
 
-  const renderInteractiveMap = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Carte interactive</Text>
-      <View style={styles.mapContainer}>
-        <TripMap 
-          itinerary={trip} 
-          style={styles.map}
-          showFamilyTips={true}
-        />
-        <TouchableOpacity 
-          style={styles.mapButton}
-          onPress={() => navigation.navigate('FullMap', { itinerary: trip })}
-        >
-          <Ionicons name="expand-outline" size={24} color="#fff" />
-          <Text style={styles.mapButtonText}>Voir la carte complète</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderPracticalInfo = () => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Informations pratiques</Text>
-      <View style={styles.practicalInfoGrid}>
-        <View style={styles.practicalInfoItem}>
-          <Ionicons name="bed-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.practicalInfoLabel}>Hébergement</Text>
-          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.accommodation}</Text>
-        </View>
-        <View style={styles.practicalInfoItem}>
-          <Ionicons name="restaurant-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.practicalInfoLabel}>Repas</Text>
-          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.meals}</Text>
-        </View>
-        <View style={styles.practicalInfoItem}>
-          <Ionicons name="bus-outline" size={24} color={theme.colors.primary} />
-          <Text style={styles.practicalInfoLabel}>Transport</Text>
-          <Text style={styles.practicalInfoValue}>{trip.practicalInfo?.transport}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
   const renderUpcomingTripDetails = () => (
     <>
       {renderHeroSection()}
       
       <View style={styles.contentContainer}>
         {renderSummarySection()}
+        {renderPersonalizedRecommendations()}
         {renderImageCarousel()}
         {renderInteractiveMap()}
         {renderDetailedItinerary()}
@@ -342,6 +464,15 @@ export default function TripDetailScreen() {
     </>
   );
 
+  if (loadingItinerary) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loadingText}>Chargement des détails de l'itinéraire...</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeContainer}>
       <Animated.ScrollView 
@@ -360,7 +491,10 @@ export default function TripDetailScreen() {
         <View style={styles.bottomContainer}>
           <TouchableOpacity 
             style={styles.bookButton}
-            onPress={handleCreateTrip}
+            onPress={() => {
+              console.log('🎯 TripDetailScreen - Création de voyage demandée');
+              setShowCreateTripModal(true);
+            }}
             disabled={loading}
           >
             <Text style={styles.bookButtonText}>
@@ -706,5 +840,90 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  recommendationsCarousel: {
+    paddingHorizontal: 8,
+  },
+  memberRecommendation: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
+    width: width - 56,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  memberHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  memberAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    shadowColor: theme.colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  memberInitials: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  memberInfo: {
+    flex: 1,
+  },
+  memberName: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+  },
+  recommendationsList: {
+    gap: 12,
+  },
+  recommendationItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#f8f8f8',
+    padding: 12,
+    borderRadius: 12,
+  },
+  recommendationIcon: {
+    marginRight: 12,
+    marginTop: 2,
+  },
+  recommendationText: {
+    fontSize: 15,
+    color: '#444',
+    flex: 1,
+    lineHeight: 22,
   },
 }); 

@@ -15,6 +15,20 @@ interface FamilyMember {
   age: string;
   role: string;
   dietaryRestrictions: string[];
+  adultPreferences?: {
+    travelExperience: string[];
+    interests: string[];
+    comfortLevel: string;
+    pacePreference: string;
+    accommodationStyle: string[];
+  };
+  childPreferences?: {
+    interests: string[];
+    energyLevel: string;
+    attentionSpan: string;
+    comfortItems: string[];
+    specialNeeds: string[];
+  };
 }
 
 interface FamilyMembersProps {
@@ -25,6 +39,42 @@ interface FamilyMembersProps {
 }
 
 const roles = ['Parent', 'Enfant', 'Grand-parent', 'Autre'];
+
+const adultTravelExperiences = [
+  'Débutant',
+  'Intermédiaire',
+  'Expert',
+  'Aventureux',
+  'Prudent'
+];
+
+const adultInterests = [
+  'Culture',
+  'Nature',
+  'Gastronomie',
+  'Sport',
+  'Shopping',
+  'Histoire',
+  'Art',
+  'Relaxation'
+];
+
+const childInterests = [
+  'Animaux',
+  'Parcs d\'attractions',
+  'Plage',
+  'Musées interactifs',
+  'Sport',
+  'Nature',
+  'Culture',
+  'Jeux'
+];
+
+const energyLevels = ['Calme', 'Modéré', 'Très actif'];
+const attentionSpans = ['Court', 'Moyen', 'Long'];
+const comfortLevels = ['Basique', 'Confortable', 'Luxe'];
+const pacePreferences = ['Lent', 'Modéré', 'Rapide'];
+const accommodationStyles = ['Hôtel', 'Appartement', 'Maison', 'Camping', 'Auberge'];
 
 export const FamilyMembers: React.FC<FamilyMembersProps> = ({
   data,
@@ -52,17 +102,37 @@ export const FamilyMembers: React.FC<FamilyMembersProps> = ({
       return;
     }
 
+    const memberToAdd = {
+      ...currentMember,
+      id: isEditing ? currentMember.id : Date.now().toString(),
+    };
+
+    if (memberToAdd.role === 'Parent' || memberToAdd.role === 'Grand-parent') {
+      memberToAdd.adultPreferences = {
+        travelExperience: [],
+        interests: [],
+        comfortLevel: '',
+        pacePreference: '',
+        accommodationStyle: [],
+      };
+    } else if (memberToAdd.role === 'Enfant') {
+      memberToAdd.childPreferences = {
+        interests: [],
+        energyLevel: '',
+        attentionSpan: '',
+        comfortItems: [],
+        specialNeeds: [],
+      };
+    }
+
     if (isEditing) {
       setMembers((prev) =>
         prev.map((member) =>
-          member.id === currentMember.id ? currentMember : member
+          member.id === currentMember.id ? memberToAdd : member
         )
       );
     } else {
-      setMembers((prev) => [
-        ...prev,
-        { ...currentMember, id: Date.now().toString() },
-      ]);
+      setMembers((prev) => [...prev, memberToAdd]);
     }
 
     setCurrentMember({
@@ -76,7 +146,28 @@ export const FamilyMembers: React.FC<FamilyMembersProps> = ({
   };
 
   const handleEditMember = (member: FamilyMember) => {
-    setCurrentMember(member);
+    const memberWithPreferences = {
+      ...member,
+      adultPreferences: member.role === 'Parent' || member.role === 'Grand-parent' 
+        ? member.adultPreferences || {
+            travelExperience: [],
+            interests: [],
+            comfortLevel: '',
+            pacePreference: '',
+            accommodationStyle: [],
+          }
+        : undefined,
+      childPreferences: member.role === 'Enfant'
+        ? member.childPreferences || {
+            interests: [],
+            energyLevel: '',
+            attentionSpan: '',
+            comfortItems: [],
+            specialNeeds: [],
+          }
+        : undefined,
+    };
+    setCurrentMember(memberWithPreferences);
     setIsEditing(true);
   };
 
@@ -149,9 +240,42 @@ export const FamilyMembers: React.FC<FamilyMembersProps> = ({
                   styles.roleChip,
                   currentMember.role === role && styles.roleChipSelected,
                 ]}
-                onPress={() =>
-                  setCurrentMember((prev) => ({ ...prev, role }))
-                }
+                onPress={() => {
+                  if (role === 'Parent' || role === 'Grand-parent') {
+                    setCurrentMember((prev) => ({
+                      ...prev,
+                      role,
+                      adultPreferences: {
+                        travelExperience: [],
+                        interests: [],
+                        comfortLevel: '',
+                        pacePreference: '',
+                        accommodationStyle: [],
+                      },
+                      childPreferences: undefined,
+                    }));
+                  } else if (role === 'Enfant') {
+                    setCurrentMember((prev) => ({
+                      ...prev,
+                      role,
+                      childPreferences: {
+                        interests: [],
+                        energyLevel: '',
+                        attentionSpan: '',
+                        comfortItems: [],
+                        specialNeeds: [],
+                      },
+                      adultPreferences: undefined,
+                    }));
+                  } else {
+                    setCurrentMember((prev) => ({
+                      ...prev,
+                      role,
+                      adultPreferences: undefined,
+                      childPreferences: undefined,
+                    }));
+                  }
+                }}
               >
                 <Text
                   style={[
@@ -165,6 +289,213 @@ export const FamilyMembers: React.FC<FamilyMembersProps> = ({
             ))}
           </View>
         </View>
+
+        {(currentMember.role === 'Parent' || currentMember.role === 'Grand-parent') && (
+          <View style={styles.preferencesContainer}>
+            <Text style={styles.sectionTitle}>Préférences de voyage</Text>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Expérience de voyage</Text>
+              <View style={styles.chipContainer}>
+                {adultTravelExperiences.map((exp) => (
+                  <TouchableOpacity
+                    key={exp}
+                    style={[
+                      styles.chip,
+                      currentMember.adultPreferences?.travelExperience.includes(exp) && styles.chipSelected,
+                    ]}
+                    onPress={() => {
+                      const newExperiences = currentMember.adultPreferences?.travelExperience.includes(exp)
+                        ? currentMember.adultPreferences.travelExperience.filter(e => e !== exp)
+                        : [...(currentMember.adultPreferences?.travelExperience || []), exp];
+                      setCurrentMember(prev => ({
+                        ...prev,
+                        adultPreferences: {
+                          ...prev.adultPreferences,
+                          travelExperience: newExperiences,
+                        },
+                      }));
+                    }}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      currentMember.adultPreferences?.travelExperience.includes(exp) && styles.chipTextSelected,
+                    ]}>
+                      {exp}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Centres d'intérêt</Text>
+              <View style={styles.chipContainer}>
+                {adultInterests.map((interest) => (
+                  <TouchableOpacity
+                    key={interest}
+                    style={[
+                      styles.chip,
+                      currentMember.adultPreferences?.interests.includes(interest) && styles.chipSelected,
+                    ]}
+                    onPress={() => {
+                      const newInterests = currentMember.adultPreferences?.interests.includes(interest)
+                        ? currentMember.adultPreferences.interests.filter(i => i !== interest)
+                        : [...(currentMember.adultPreferences?.interests || []), interest];
+                      setCurrentMember(prev => ({
+                        ...prev,
+                        adultPreferences: {
+                          ...prev.adultPreferences,
+                          interests: newInterests,
+                        },
+                      }));
+                    }}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      currentMember.adultPreferences?.interests.includes(interest) && styles.chipTextSelected,
+                    ]}>
+                      {interest}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Niveau de confort</Text>
+              <View style={styles.chipContainer}>
+                {comfortLevels.map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[
+                      styles.chip,
+                      currentMember.adultPreferences?.comfortLevel === level && styles.chipSelected,
+                    ]}
+                    onPress={() => {
+                      setCurrentMember(prev => ({
+                        ...prev,
+                        adultPreferences: {
+                          ...prev.adultPreferences,
+                          comfortLevel: level,
+                        },
+                      }));
+                    }}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      currentMember.adultPreferences?.comfortLevel === level && styles.chipTextSelected,
+                    ]}>
+                      {level}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {currentMember.role === 'Enfant' && (
+          <View style={styles.preferencesContainer}>
+            <Text style={styles.sectionTitle}>Préférences de l'enfant</Text>
+            
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Centres d'intérêt</Text>
+              <View style={styles.chipContainer}>
+                {childInterests.map((interest) => (
+                  <TouchableOpacity
+                    key={interest}
+                    style={[
+                      styles.chip,
+                      currentMember.childPreferences?.interests.includes(interest) && styles.chipSelected,
+                    ]}
+                    onPress={() => {
+                      const newInterests = currentMember.childPreferences?.interests.includes(interest)
+                        ? currentMember.childPreferences.interests.filter(i => i !== interest)
+                        : [...(currentMember.childPreferences?.interests || []), interest];
+                      setCurrentMember(prev => ({
+                        ...prev,
+                        childPreferences: {
+                          ...prev.childPreferences,
+                          interests: newInterests,
+                        },
+                      }));
+                    }}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      currentMember.childPreferences?.interests.includes(interest) && styles.chipTextSelected,
+                    ]}>
+                      {interest}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Niveau d'énergie</Text>
+              <View style={styles.chipContainer}>
+                {energyLevels.map((level) => (
+                  <TouchableOpacity
+                    key={level}
+                    style={[
+                      styles.chip,
+                      currentMember.childPreferences?.energyLevel === level && styles.chipSelected,
+                    ]}
+                    onPress={() => {
+                      setCurrentMember(prev => ({
+                        ...prev,
+                        childPreferences: {
+                          ...prev.childPreferences,
+                          energyLevel: level,
+                        },
+                      }));
+                    }}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      currentMember.childPreferences?.energyLevel === level && styles.chipTextSelected,
+                    ]}>
+                      {level}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Capacité d'attention</Text>
+              <View style={styles.chipContainer}>
+                {attentionSpans.map((span) => (
+                  <TouchableOpacity
+                    key={span}
+                    style={[
+                      styles.chip,
+                      currentMember.childPreferences?.attentionSpan === span && styles.chipSelected,
+                    ]}
+                    onPress={() => {
+                      setCurrentMember(prev => ({
+                        ...prev,
+                        childPreferences: {
+                          ...prev.childPreferences,
+                          attentionSpan: span,
+                        },
+                      }));
+                    }}
+                  >
+                    <Text style={[
+                      styles.chipText,
+                      currentMember.childPreferences?.attentionSpan === span && styles.chipTextSelected,
+                    ]}>
+                      {span}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
 
         <TouchableOpacity
           style={styles.addButton}
@@ -184,6 +515,80 @@ export const FamilyMembers: React.FC<FamilyMembersProps> = ({
               <Text style={styles.memberDetails}>
                 {member.age} ans • {member.role}
               </Text>
+              
+              {(member.role === 'Parent' || member.role === 'Grand-parent') && member.adultPreferences && (
+                <View style={styles.preferencesList}>
+                  {member.adultPreferences.travelExperience.length > 0 && (
+                    <View style={styles.preferenceItem}>
+                      <Text style={styles.preferenceLabel}>Expérience :</Text>
+                      <View style={styles.preferenceChips}>
+                        {member.adultPreferences.travelExperience.map((exp, index) => (
+                          <View key={index} style={styles.preferenceChip}>
+                            <Text style={styles.preferenceChipText}>{exp}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                  
+                  {member.adultPreferences.interests.length > 0 && (
+                    <View style={styles.preferenceItem}>
+                      <Text style={styles.preferenceLabel}>Centres d'intérêt :</Text>
+                      <View style={styles.preferenceChips}>
+                        {member.adultPreferences.interests.map((interest, index) => (
+                          <View key={index} style={styles.preferenceChip}>
+                            <Text style={styles.preferenceChipText}>{interest}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                  
+                  {member.adultPreferences.comfortLevel && (
+                    <View style={styles.preferenceItem}>
+                      <Text style={styles.preferenceLabel}>Confort :</Text>
+                      <View style={styles.preferenceChip}>
+                        <Text style={styles.preferenceChipText}>{member.adultPreferences.comfortLevel}</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              {member.role === 'Enfant' && member.childPreferences && (
+                <View style={styles.preferencesList}>
+                  {member.childPreferences.interests.length > 0 && (
+                    <View style={styles.preferenceItem}>
+                      <Text style={styles.preferenceLabel}>Centres d'intérêt :</Text>
+                      <View style={styles.preferenceChips}>
+                        {member.childPreferences.interests.map((interest, index) => (
+                          <View key={index} style={styles.preferenceChip}>
+                            <Text style={styles.preferenceChipText}>{interest}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                  
+                  {member.childPreferences.energyLevel && (
+                    <View style={styles.preferenceItem}>
+                      <Text style={styles.preferenceLabel}>Énergie :</Text>
+                      <View style={styles.preferenceChip}>
+                        <Text style={styles.preferenceChipText}>{member.childPreferences.energyLevel}</Text>
+                      </View>
+                    </View>
+                  )}
+                  
+                  {member.childPreferences.attentionSpan && (
+                    <View style={styles.preferenceItem}>
+                      <Text style={styles.preferenceLabel}>Attention :</Text>
+                      <View style={styles.preferenceChip}>
+                        <Text style={styles.preferenceChipText}>{member.childPreferences.attentionSpan}</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
             <View style={styles.memberActions}>
               <TouchableOpacity
@@ -371,5 +776,72 @@ const styles = StyleSheet.create({
   },
   buttonTextSecondary: {
     color: '#0f8066',
+  },
+  preferencesContainer: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+  },
+  chip: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    margin: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  chipSelected: {
+    backgroundColor: '#0f8066',
+    borderColor: '#0f8066',
+  },
+  chipText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  chipTextSelected: {
+    color: '#fff',
+  },
+  preferencesList: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  preferenceItem: {
+    marginBottom: 8,
+  },
+  preferenceLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  preferenceChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+  },
+  preferenceChip: {
+    backgroundColor: '#e8f5e9',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    margin: 2,
+  },
+  preferenceChipText: {
+    color: '#0f8066',
+    fontSize: 12,
   },
 }); 

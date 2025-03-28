@@ -204,6 +204,7 @@ export default function FamilyTripsScreen() {
                 price: itinerary.price
               }}
               onPress={() => navigation.navigate('TripDetail', { trip: itinerary, isPast: false })}
+              familyMembers={familyData?.members || []}
             />
           ))}
         </View>

@@ -18,6 +18,55 @@ import { Ionicons } from '@expo/vector-icons';
 
 const ROLES = ['Adulte', 'Enfant'];
 
+const ADULT_INTERESTS = [
+  'Culture',
+  'Nature',
+  'Gastronomie',
+  'Sport',
+  'Shopping',
+  'Histoire',
+  'Art',
+  'Relaxation'
+];
+
+const CHILD_INTERESTS = [
+  'Animaux',
+  'Parcs d\'attractions',
+  'Plage',
+  'Musées interactifs',
+  'Sport',
+  'Nature',
+  'Culture',
+  'Jeux'
+];
+
+const DIETARY_RESTRICTIONS = [
+  'Sans allergènes',
+  'Végétarien',
+  'Sans gluten',
+  'Sans lactose'
+];
+
+const COMMON_ACTIVITIES = [
+  'Randonnée',
+  'Plage',
+  'Visites culturelles',
+  'Shopping',
+  'Sports nautiques',
+  'Parcs d\'attractions',
+  'Restaurants',
+  'Musées',
+  'Vélo',
+  'Zoo',
+  'Spectacles',
+  'Activités en plein air'
+];
+
+const ENERGY_LEVELS = ['Calme', 'Modéré', 'Très actif'];
+const ATTENTION_SPANS = ['Court', 'Moyen', 'Long'];
+const COMFORT_LEVELS = ['Basique', 'Confortable', 'Luxe'];
+const TRAVEL_EXPERIENCES = ['Débutant', 'Intermédiaire', 'Expert', 'Aventureux', 'Prudent'];
+
 export const FamilyMemberEditor = ({ member, visible, onSave, onClose }) => {
   const { colors } = useTheme();
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -26,8 +75,20 @@ export const FamilyMemberEditor = ({ member, visible, onSave, onClose }) => {
     last_name: member?.last_name || '',
     role: member?.role || 'Adulte',
     birth_date: member?.birth_date ? new Date(member.birth_date) : new Date(),
-    dietary_restrictions: member?.dietary_restrictions || '',
-    preferred_activities: member?.preferred_activities || []
+    dietary_restrictions: member?.dietary_restrictions ? member.dietary_restrictions.split(',').map(r => r.trim()) : [],
+    preferred_activities: member?.preferred_activities || [],
+    // Préférences spécifiques pour les adultes
+    adult_preferences: member?.adult_preferences || {
+      travel_experience: [],
+      interests: [],
+      comfort_level: '',
+    },
+    // Préférences spécifiques pour les enfants
+    child_preferences: member?.child_preferences || {
+      interests: [],
+      energy_level: '',
+      attention_span: '',
+    }
   });
 
   const handleDateChange = (event, selectedDate) => {
@@ -153,29 +214,257 @@ export const FamilyMemberEditor = ({ member, visible, onSave, onClose }) => {
                 />
               )}
 
-              <Text style={styles.label}>Restrictions alimentaires</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={formData.dietary_restrictions}
-                onChangeText={(text) => setFormData(prev => ({ ...prev, dietary_restrictions: text }))}
-                placeholder="Allergies, régimes spéciaux..."
-                placeholderTextColor="#999"
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+              {formData.role === 'Adulte' && (
+                <View style={styles.preferencesSection}>
+                  <Text style={styles.sectionTitle}>Préférences de voyage</Text>
 
-              <Text style={styles.label}>Activités préférées</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={formData.preferred_activities.join(', ')}
-                onChangeText={handleActivitiesChange}
-                placeholder="Activités (séparées par des virgules)"
-                placeholderTextColor="#999"
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-              />
+                  <Text style={styles.label}>Expérience de voyage</Text>
+                  <View style={styles.chipContainer}>
+                    {TRAVEL_EXPERIENCES.map((exp) => (
+                      <TouchableOpacity
+                        key={exp}
+                        style={[
+                          styles.chip,
+                          formData.adult_preferences.travel_experience.includes(exp) && styles.chipSelected
+                        ]}
+                        onPress={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            adult_preferences: {
+                              ...prev.adult_preferences,
+                              travel_experience: prev.adult_preferences.travel_experience.includes(exp)
+                                ? prev.adult_preferences.travel_experience.filter(e => e !== exp)
+                                : [...prev.adult_preferences.travel_experience, exp]
+                            }
+                          }));
+                        }}
+                      >
+                        <Text style={[
+                          styles.chipText,
+                          formData.adult_preferences.travel_experience.includes(exp) && styles.chipTextSelected
+                        ]}>
+                          {exp}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.label}>Centres d'intérêt</Text>
+                  <View style={styles.chipContainer}>
+                    {ADULT_INTERESTS.map((interest) => (
+                      <TouchableOpacity
+                        key={interest}
+                        style={[
+                          styles.chip,
+                          formData.adult_preferences.interests.includes(interest) && styles.chipSelected
+                        ]}
+                        onPress={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            adult_preferences: {
+                              ...prev.adult_preferences,
+                              interests: prev.adult_preferences.interests.includes(interest)
+                                ? prev.adult_preferences.interests.filter(i => i !== interest)
+                                : [...prev.adult_preferences.interests, interest]
+                            }
+                          }));
+                        }}
+                      >
+                        <Text style={[
+                          styles.chipText,
+                          formData.adult_preferences.interests.includes(interest) && styles.chipTextSelected
+                        ]}>
+                          {interest}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.label}>Niveau de confort</Text>
+                  <View style={styles.chipContainer}>
+                    {COMFORT_LEVELS.map((level) => (
+                      <TouchableOpacity
+                        key={level}
+                        style={[
+                          styles.chip,
+                          formData.adult_preferences.comfort_level === level && styles.chipSelected
+                        ]}
+                        onPress={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            adult_preferences: {
+                              ...prev.adult_preferences,
+                              comfort_level: level
+                            }
+                          }));
+                        }}
+                      >
+                        <Text style={[
+                          styles.chipText,
+                          formData.adult_preferences.comfort_level === level && styles.chipTextSelected
+                        ]}>
+                          {level}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {formData.role === 'Enfant' && (
+                <View style={styles.preferencesSection}>
+                  <Text style={styles.sectionTitle}>Préférences de l'enfant</Text>
+
+                  <Text style={styles.label}>Centres d'intérêt</Text>
+                  <View style={styles.chipContainer}>
+                    {CHILD_INTERESTS.map((interest) => (
+                      <TouchableOpacity
+                        key={interest}
+                        style={[
+                          styles.chip,
+                          formData.child_preferences.interests.includes(interest) && styles.chipSelected
+                        ]}
+                        onPress={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            child_preferences: {
+                              ...prev.child_preferences,
+                              interests: prev.child_preferences.interests.includes(interest)
+                                ? prev.child_preferences.interests.filter(i => i !== interest)
+                                : [...prev.child_preferences.interests, interest]
+                            }
+                          }));
+                        }}
+                      >
+                        <Text style={[
+                          styles.chipText,
+                          formData.child_preferences.interests.includes(interest) && styles.chipTextSelected
+                        ]}>
+                          {interest}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.label}>Niveau d'énergie</Text>
+                  <View style={styles.chipContainer}>
+                    {ENERGY_LEVELS.map((level) => (
+                      <TouchableOpacity
+                        key={level}
+                        style={[
+                          styles.chip,
+                          formData.child_preferences.energy_level === level && styles.chipSelected
+                        ]}
+                        onPress={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            child_preferences: {
+                              ...prev.child_preferences,
+                              energy_level: level
+                            }
+                          }));
+                        }}
+                      >
+                        <Text style={[
+                          styles.chipText,
+                          formData.child_preferences.energy_level === level && styles.chipTextSelected
+                        ]}>
+                          {level}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={styles.label}>Capacité d'attention</Text>
+                  <View style={styles.chipContainer}>
+                    {ATTENTION_SPANS.map((span) => (
+                      <TouchableOpacity
+                        key={span}
+                        style={[
+                          styles.chip,
+                          formData.child_preferences.attention_span === span && styles.chipSelected
+                        ]}
+                        onPress={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            child_preferences: {
+                              ...prev.child_preferences,
+                              attention_span: span
+                            }
+                          }));
+                        }}
+                      >
+                        <Text style={[
+                          styles.chipText,
+                          formData.child_preferences.attention_span === span && styles.chipTextSelected
+                        ]}>
+                          {span}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.preferencesSection}>
+                <Text style={styles.sectionTitle}>Préférences générales</Text>
+
+                <Text style={styles.label}>Activités préférées</Text>
+                <View style={styles.chipContainer}>
+                  {COMMON_ACTIVITIES.map((activity) => (
+                    <TouchableOpacity
+                      key={activity}
+                      style={[
+                        styles.chip,
+                        formData.preferred_activities.includes(activity) && styles.chipSelected
+                      ]}
+                      onPress={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          preferred_activities: prev.preferred_activities.includes(activity)
+                            ? prev.preferred_activities.filter(a => a !== activity)
+                            : [...prev.preferred_activities, activity]
+                        }));
+                      }}
+                    >
+                      <Text style={[
+                        styles.chipText,
+                        formData.preferred_activities.includes(activity) && styles.chipTextSelected
+                      ]}>
+                        {activity}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.label}>Restrictions alimentaires</Text>
+                <View style={styles.chipContainer}>
+                  {DIETARY_RESTRICTIONS.map((restriction) => (
+                    <TouchableOpacity
+                      key={restriction}
+                      style={[
+                        styles.chip,
+                        formData.dietary_restrictions.includes(restriction) && styles.chipSelected
+                      ]}
+                      onPress={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          dietary_restrictions: prev.dietary_restrictions.includes(restriction)
+                            ? prev.dietary_restrictions.filter(r => r !== restriction)
+                            : [...prev.dietary_restrictions, restriction]
+                        }));
+                      }}
+                    >
+                      <Text style={[
+                        styles.chipText,
+                        formData.dietary_restrictions.includes(restriction) && styles.chipTextSelected
+                      ]}>
+                        {restriction}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -284,5 +573,17 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: '#fff',
+  },
+  preferencesSection: {
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
   },
 }); 

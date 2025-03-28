@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions, Text } from 'react-native';
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import { theme } from '../styles/theme';
@@ -18,7 +18,7 @@ const iconMapping = {
   // Ajoutez d'autres mappings selon vos besoins
 };
 
-export const TripMap = ({ steps, initialRegion, focusedStepIndex }) => {
+export const TripMap = ({ steps = [], initialRegion, focusedStepIndex = 0 }) => {
   const mapRef = useRef(null);
 
   useEffect(() => {
@@ -33,12 +33,7 @@ export const TripMap = ({ steps, initialRegion, focusedStepIndex }) => {
   }, [focusedStepIndex, steps]);
 
   // Créer un tableau de coordonnées pour la ligne d'itinéraire
-  const coordinates = steps.map(step => step.coordinate);
-
-  // Fonction pour obtenir le nom de l'icône Ionicons à partir d'un emoji
-  const getIconName = (emoji) => {
-    return iconMapping[emoji] || 'time-outline'; // Icône par défaut si l'emoji n'est pas mappé
-  };
+  const coordinates = steps?.map(step => step.coordinate) || [];
 
   // Fonction pour calculer la distance entre deux points
   const calculateDistance = (point1, point2) => {
@@ -57,6 +52,14 @@ export const TripMap = ({ steps, initialRegion, focusedStepIndex }) => {
   let totalDistance = 0;
   for (let i = 0; i < coordinates.length - 1; i++) {
     totalDistance += calculateDistance(coordinates[i], coordinates[i + 1]);
+  }
+
+  if (!steps || steps.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.noDataText}>Aucune étape disponible</Text>
+      </View>
+    );
   }
 
   return (
@@ -182,5 +185,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.text.dark,
     marginLeft: 4,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: theme.colors.text.dark,
+    textAlign: 'center',
+    marginTop: 100,
   },
 }); 
