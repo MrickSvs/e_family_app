@@ -8,6 +8,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface ActivitiesData {
   preferred: string[];
@@ -53,11 +54,11 @@ const getAllUniqueActivities = () => {
 };
 
 const TRAVEL_EXPERIENCE_LEVELS = [
-  { id: 'Débutant', label: 'Débutant', icon: '🌱' },
-  { id: 'Intermédiaire', label: 'Intermédiaire', icon: '🌿' },
-  { id: 'Expert', label: 'Expert', icon: '🌳' },
-  { id: 'Aventureux', label: 'Aventureux', icon: '🏃‍♂️' },
-  { id: 'Prudent', label: 'Prudent', icon: '🛡️' }
+  { id: 'Débutant', label: 'Débutant', icon: 'leaf-outline' },
+  { id: 'Intermédiaire', label: 'Intermédiaire', icon: 'leaf' },
+  { id: 'Expert', label: 'Expert', icon: 'tree-outline' },
+  { id: 'Aventureux', label: 'Aventureux', icon: 'compass-outline' },
+  { id: 'Prudent', label: 'Prudent', icon: 'shield-checkmark-outline' }
 ];
 
 export const FamilyActivities = ({
@@ -170,7 +171,11 @@ export const FamilyActivities = ({
                         isPreferred && styles.actionButtonTextActive,
                       ]}
                     >
-                      👍
+                      <Ionicons 
+                        name={isPreferred ? "thumbs-up" : "thumbs-up-outline"} 
+                        size={16} 
+                        color={isPreferred ? "#fff" : "#666"} 
+                      />
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -186,7 +191,11 @@ export const FamilyActivities = ({
                         isExcluded && styles.actionButtonTextActive,
                       ]}
                     >
-                      👎
+                      <Ionicons 
+                        name={isExcluded ? "thumbs-down" : "thumbs-down-outline"} 
+                        size={16} 
+                        color={isExcluded ? "#fff" : "#666"} 
+                      />
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -226,12 +235,19 @@ export const FamilyActivities = ({
                 }));
               }}
             >
-              <Text style={[
-                styles.activityText,
-                formData.travel_preferences?.travel_experience?.includes(level.id) && styles.preferredText,
-              ]}>
-                {`${level.icon} ${level.label}`}
-              </Text>
+              <View style={styles.levelContent}>
+                <Ionicons 
+                  name={level.icon} 
+                  size={20} 
+                  color={formData.travel_preferences?.travel_experience?.includes(level.id) ? '#0f8066' : '#666'} 
+                />
+                <Text style={[
+                  styles.activityText,
+                  formData.travel_preferences?.travel_experience?.includes(level.id) && styles.preferredText,
+                ]}>
+                  {level.label}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -392,5 +408,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -4,
+  },
+  levelContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
 }); 

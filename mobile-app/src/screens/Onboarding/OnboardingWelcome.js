@@ -21,7 +21,7 @@ export default function OnboardingWelcome() {
     <SafeAreaView style={commonStyles.container}>
       <View style={styles.contentContainer}>
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeEmoji}>👋</Text>
+          <Ionicons name="hand-left-outline" size={48} color={colors.primary} style={styles.welcomeIcon} />
           <Text style={styles.headerTitle}>Bienvenue</Text>
           <Text style={styles.headerSubtitle}>Commençons par faire connaissance</Text>
         </View>
@@ -78,8 +78,7 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'android' ? spacing.xl : spacing.lg,
     marginBottom: spacing.xl,
   },
-  welcomeEmoji: {
-    fontSize: 48,
+  welcomeIcon: {
     marginBottom: spacing.md,
   },
   headerTitle: {

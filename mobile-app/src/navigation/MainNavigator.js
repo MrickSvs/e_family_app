@@ -11,6 +11,7 @@ import PastTripDetailScreen from "../screens/PastTripDetailScreen";
 import TripDetailScreen from "../screens/TripDetailScreen";
 import CurrentTripDetailScreen from "../screens/CurrentTripDetailScreen";
 import PendingQuoteDetailScreen from "../screens/PendingQuoteDetailScreen";
+import DestinationScreen from "../screens/DestinationScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -66,6 +67,13 @@ export default function MainNavigator() {
         name="TripDetail" 
         component={TripDetailScreen}
         options={{ headerShown: true }}
+      />
+
+      {/* Écran de destination */}
+      <Stack.Screen 
+        name="Destination" 
+        component={DestinationScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

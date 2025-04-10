@@ -27,6 +27,12 @@ export default function MyTripsScreen() {
       price: "3200€ / personne",
       priceDetails: "Vol + Hébergement + Transport",
       tags: ["Nature", "Plage", "Famille", "Aventure"],
+      participants: [
+        { id: 1, name: "Marie", role: "Adulte", avatar: "https://i.pravatar.cc/150?img=1" },
+        { id: 2, name: "Thomas", role: "Adulte", avatar: "https://i.pravatar.cc/150?img=2" },
+        { id: 3, name: "Emma", role: "Enfant", avatar: "https://i.pravatar.cc/150?img=3" },
+        { id: 4, name: "Lucas", role: "Enfant", avatar: "https://i.pravatar.cc/150?img=4" }
+      ],
       gallery: [
         "https://images.unsplash.com/photo-1589820296156-2454bb8a6ad1", // Volcan Arenal
         "https://images.unsplash.com/photo-1589308454676-21b1aa8b8c1c", // Manuel Antonio
@@ -65,6 +71,11 @@ export default function MyTripsScreen() {
       price: "3500€ / personne",
       priceDetails: "Vol + Resort tout inclus",
       tags: ["Plage", "Luxe", "Relaxation", "Snorkeling"],
+      participants: [
+        { id: 1, name: "Marie", role: "Adulte", avatar: "https://i.pravatar.cc/150?img=1" },
+        { id: 2, name: "Thomas", role: "Adulte", avatar: "https://i.pravatar.cc/150?img=2" },
+        { id: 3, name: "Emma", role: "Enfant", avatar: "https://i.pravatar.cc/150?img=3" }
+      ],
       gallery: [
         "https://images.unsplash.com/photo-1514282401047-d79a71a590e8", // Vue aérienne
         "https://images.unsplash.com/photo-1540202403-b7abd6747a18", // Villa sur pilotis
@@ -78,12 +89,12 @@ export default function MyTripsScreen() {
     {
       id: 3,
       title: "Circuit Vietnam",
-      date: "En attente de devis",
+      date: "Co-création en cours",
       imageUrl: "https://images.unsplash.com/photo-1557750255-c76072a7aad1",
       description: "Découverte du Vietnam en famille",
       duration: "14 jours",
       type: "Circuit culturel",
-      status: "En cours de préparation",
+      status: "Co-création en cours",
       tags: ["Culture", "Gastronomie", "Histoire", "Nature"],
       gallery: [
         "https://images.unsplash.com/photo-1557750255-c76072a7aad1", // Baie d'Halong
@@ -162,6 +173,28 @@ export default function MyTripsScreen() {
     }
   };
 
+  const renderParticipants = (participants) => {
+    if (!participants) return null;
+
+    return (
+      <View style={styles.participantsContainer}>
+        <View style={styles.participantsList}>
+          {participants.map((participant, index) => (
+            <View key={participant.id} style={styles.participantAvatar}>
+              <Image 
+                source={{ uri: participant.avatar }} 
+                style={styles.avatarImage}
+              />
+            </View>
+          ))}
+        </View>
+        <Text style={styles.participantsCount}>
+          {participants.length} participant{participants.length > 1 ? 's' : ''}
+        </Text>
+      </View>
+    );
+  };
+
   const renderTripCard = (trip, type) => {
     const isPending = type === 'pending';
     
@@ -171,11 +204,25 @@ export default function MyTripsScreen() {
         style={[styles.tripCard, isPending && styles.pendingCard]}
         onPress={() => navigateToTripDetail(trip, type)}
       >
-        <Image source={{ uri: trip.image_url }} style={styles.tripImage} />
+        <Image 
+          source={{ uri: trip.image_url || trip.imageUrl }} 
+          style={styles.tripImage} 
+        />
         <View style={styles.tripInfo}>
           <Text style={styles.tripTitle}>{trip.title}</Text>
           <Text style={styles.tripDate}>{trip.date}</Text>
-          {!isPending && type !== 'past' && (
+          {(type === 'current' || type === 'upcoming') && renderParticipants(trip.participants)}
+          {type === 'current' && (
+            <View style={styles.tripDetails}>
+              <View style={styles.detailItem}>
+                <Text style={styles.detailText}>{trip.duration}</Text>
+              </View>
+              <View style={styles.detailItem}>
+                <Text style={styles.detailText}>{trip.type}</Text>
+              </View>
+            </View>
+          )}
+          {type === 'upcoming' && (
             <>
               <View style={styles.progressContainer}>
                 <View style={[styles.progressBar, { width: `${trip.progress}%` }]} />
@@ -227,7 +274,7 @@ export default function MyTripsScreen() {
 
         {/* Section : Voyages en attente de devis */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>En attente de devis</Text>
+          <Text style={styles.sectionTitle}>Co-création en cours</Text>
           {pendingQuotes.map((trip) => renderTripCard(trip, 'pending'))}
         </View>
 
@@ -244,7 +291,7 @@ export default function MyTripsScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F7F5ED",
   },
   scrollContent: {
     paddingBottom: 20,
@@ -347,5 +394,46 @@ const styles = StyleSheet.create({
     color: "#FFA500",
     fontSize: 12,
     fontWeight: "500",
+  },
+  tripDetails: {
+    flexDirection: 'row',
+    marginTop: 4,
+    gap: 12,
+  },
+  detailItem: {
+    backgroundColor: '#F7F5ED',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  detailText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  participantsContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  participantsList: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  participantAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: -8,
+    borderWidth: 2,
+    borderColor: '#fff',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  participantsCount: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
   },
 });

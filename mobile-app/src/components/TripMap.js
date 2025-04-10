@@ -8,20 +8,26 @@ const { width } = Dimensions.get('window');
 
 // Mapping des emojis vers les icônes Ionicons
 const iconMapping = {
-  '⛵': 'boat-outline',
-  '🍽️': 'restaurant-outline',
-  '🛥️': 'boat-outline',
-  '🏖️': 'sunny-outline',
-  '🤿': 'water-outline',
-  '🚶': 'walk-outline',
-  '🏁': 'flag-outline',
-  '🏨': 'bed-outline',
-  '🍜': 'restaurant-outline',
-  '🚲': 'bicycle-outline',
-  '🎨': 'color-palette-outline',
-  '🚢': 'boat-outline',
-  '🦑': 'fish-outline',
-  // Ajoutez d'autres mappings selon vos besoins
+  'boat': 'boat-outline',
+  'restaurant': 'restaurant-outline',
+  'beach': 'sunny-outline',
+  'diving': 'water-outline',
+  'walking': 'walk-outline',
+  'finish': 'flag-outline',
+  'hotel': 'bed-outline',
+  'food': 'restaurant-outline',
+  'bicycle': 'bicycle-outline',
+  'art': 'color-palette-outline',
+  'ship': 'boat-outline',
+  'fish': 'fish-outline',
+  'temple': 'business-outline',
+  'pray': 'heart-outline',
+  'bus': 'bus-outline',
+  'cycling': 'bicycle-outline',
+  'airplane-outline': 'airplane-outline',
+  'leaf-outline': 'leaf-outline',
+  'eye-outline': 'eye-outline',
+  'compass-outline': 'compass-outline'
 };
 
 export const TripMap = ({ steps = [], initialRegion, focusedStepIndex = 0 }) => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { 
   SafeAreaView, 
   View, 
@@ -10,7 +10,8 @@ import {
   Dimensions,
   FlatList,
   Animated,
-  Modal
+  Modal,
+  ActivityIndicator
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +19,8 @@ import { TripMap } from "../components/TripMap";
 import { theme } from "../styles/theme";
 import AgencyBlock from "../components/AgencyBlock";
 import DayDetailModal from "../components/DayDetailModal";
+import FamilyPhotoGallery from "../components/FamilyPhotoGallery";
+import FamilyPhotoService from "../services/FamilyPhotoService";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // Largeur de la carte avec marges
@@ -25,19 +28,22 @@ const CARD_MARGIN = 8;
 
 // Mapping des emojis vers les icônes Ionicons
 const iconMapping = {
-  '⛵': 'boat-outline',
-  '🍽️': 'restaurant-outline',
-  '🛥️': 'boat-outline',
-  '🏖️': 'sunny-outline',
-  '🤿': 'water-outline',
-  '🚶': 'walk-outline',
-  '🏁': 'flag-outline',
-  '🏨': 'bed-outline',
-  '🍜': 'restaurant-outline',
-  '🚲': 'bicycle-outline',
-  '🎨': 'color-palette-outline',
-  '🚢': 'boat-outline',
-  '🦑': 'fish-outline',
+  'boat': 'boat-outline',
+  'restaurant': 'restaurant-outline',
+  'beach': 'sunny-outline',
+  'diving': 'water-outline',
+  'walking': 'walk-outline',
+  'finish': 'flag-outline',
+  'hotel': 'bed-outline',
+  'food': 'restaurant-outline',
+  'bicycle': 'bicycle-outline',
+  'art': 'color-palette-outline',
+  'ship': 'boat-outline',
+  'fish': 'fish-outline',
+  'temple': 'business-outline',
+  'pray': 'heart-outline',
+  'bus': 'bus-outline',
+  'cycling': 'bicycle-outline'
 };
 
 // Données mockées pour le développement
@@ -49,12 +55,12 @@ const MOCK_TRIP_STEPS = [
     },
     name: "San José",
     date: "15 Mars 2024",
-    imageUrl: "https://images.unsplash.com/photo-1518183261945-b0989cfb3723",
+    imageUrl: "https://images.visitarcostarica.com/turismo-en-san-jose.jpg",
     description: "Arrivée à San José ! Installation à l'hôtel et première découverte de la capitale costaricaine.",
     program: [
       { time: "14:00", activity: "Arrivée à l'aéroport", icon: "airplane-outline" },
-      { time: "16:00", activity: "Check-in à l'hôtel", icon: "bed-outline" },
-      { time: "18:00", activity: "Dîner de bienvenue", icon: "restaurant-outline" }
+      { time: "16:00", activity: "Check-in à l'hôtel", icon: "hotel" },
+      { time: "18:00", activity: "Dîner de bienvenue", icon: "restaurant" }
     ],
     status: 'past',
     memories: {
@@ -72,12 +78,12 @@ const MOCK_TRIP_STEPS = [
     },
     name: "Arenal",
     date: "16 Mars 2024",
-    imageUrl: "https://images.unsplash.com/photo-1589820296156-2454bb8a6ad1",
+    imageUrl: "https://beauvoyage.com/cdn/shop/articles/arenal.jpg?crop=center&height=540&v=1708357317&width=810",
     description: "Direction le parc national de l'Arenal ! Découverte du volcan et des sources chaudes en famille.",
     program: [
-      { time: "09:00", activity: "Randonnée au volcan", icon: "walk-outline" },
-      { time: "12:30", activity: "Pique-nique tropical", icon: "restaurant-outline" },
-      { time: "15:00", activity: "Sources chaudes", icon: "water-outline" }
+      { time: "09:00", activity: "Randonnée au volcan", icon: "walking" },
+      { time: "12:30", activity: "Pique-nique tropical", icon: "food" },
+      { time: "15:00", activity: "Sources chaudes", icon: "diving" }
     ],
     status: 'current',
     memories: {
@@ -92,11 +98,11 @@ const MOCK_TRIP_STEPS = [
     },
     name: "Manuel Antonio",
     date: "18 Mars 2024",
-    imageUrl: "https://images.unsplash.com/photo-1589308454676-21b1aa8b8c1c",
+    imageUrl: "https://www.visitcostarica.com/sites/default/files/2024-10/Aerial%20Drone%20view%20of%20Manuel%20Antonio%20National%20Park%20in%20Costa%20Rica.%20.jpg",
     description: "Parc national de Manuel Antonio : plages paradisiaques, singes capucins et activités pour toute la famille !",
     program: [
       { time: "08:00", activity: "Visite du parc national", icon: "leaf-outline" },
-      { time: "11:00", activity: "Plage et baignade", icon: "sunny-outline" },
+      { time: "11:00", activity: "Plage et baignade", icon: "beach" },
       { time: "15:00", activity: "Observation des singes", icon: "eye-outline" }
     ],
     status: 'upcoming'
@@ -108,11 +114,11 @@ const MOCK_TRIP_STEPS = [
     },
     name: "Tamarindo",
     date: "20 Mars 2024",
-    imageUrl: "https://images.unsplash.com/photo-1596895111956-bf1cf0599ce5",
+    imageUrl: "https://images.ctfassets.net/bth3mlrehms2/4rwmLuPvkyend6Mn405q9e/04b59338502099d6b23e6062da83d407/Tamarindo__Guanacaste__Costa_Rica_.jpg",
     description: "Détente à Tamarindo : surf pour les plus grands, jeux de plage pour les petits et coucher de soleil pour tous !",
     program: [
-      { time: "10:00", activity: "Cours de surf en famille", icon: "boat-outline" },
-      { time: "13:00", activity: "Déjeuner sur la plage", icon: "restaurant-outline" },
+      { time: "10:00", activity: "Cours de surf en famille", icon: "boat" },
+      { time: "13:00", activity: "Déjeuner sur la plage", icon: "restaurant" },
       { time: "16:00", activity: "Balade en bateau", icon: "compass-outline" }
     ],
     status: 'upcoming'
@@ -137,7 +143,45 @@ export default function CurrentTripDetailScreen() {
   const [focusedStepIndex, setFocusedStepIndex] = useState(currentDayIndex);
   const [selectedDay, setSelectedDay] = useState(null);
   const [isDayDetailModalVisible, setIsDayDetailModalVisible] = useState(false);
+  const [photos, setPhotos] = useState([]);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
   const flatListRef = useRef(null);
+
+  useEffect(() => {
+    loadPhotos();
+  }, []);
+
+  const loadPhotos = async () => {
+    if (trip?.id) {
+      const tripPhotos = await FamilyPhotoService.getPhotos(trip.id);
+      setPhotos(tripPhotos);
+    }
+    setIsLoadingPhotos(false);
+  };
+
+  const handleAddPhotos = async (tripId) => {
+    const newPhotos = await FamilyPhotoService.addPhotos(tripId);
+    if (newPhotos.length > 0) {
+      setPhotos(prevPhotos => [...prevPhotos, ...newPhotos]);
+    }
+  };
+
+  const handleDeletePhoto = async (tripId, photoId) => {
+    await FamilyPhotoService.deletePhoto(tripId, photoId);
+    setPhotos(prevPhotos => prevPhotos.filter(photo => photo.id !== photoId));
+  };
+
+  const handleAddComment = async (tripId, photoId, comment) => {
+    await FamilyPhotoService.addComment(tripId, photoId, comment);
+    const updatedPhotos = await FamilyPhotoService.getPhotos(tripId);
+    setPhotos(updatedPhotos);
+  };
+
+  const handleLikePhoto = async (tripId, photoId) => {
+    await FamilyPhotoService.likePhoto(tripId, photoId);
+    const updatedPhotos = await FamilyPhotoService.getPhotos(tripId);
+    setPhotos(updatedPhotos);
+  };
 
   const handleDayPress = (day) => {
     setSelectedDay(day);
@@ -322,6 +366,22 @@ export default function CurrentTripDetailScreen() {
             }}
             initialScrollIndex={currentDayIndex}
           />
+        </View>
+
+        {/* Galerie photos familiales */}
+        <View style={styles.section}>
+          {isLoadingPhotos ? (
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          ) : (
+            <FamilyPhotoGallery
+              tripId={trip.id}
+              photos={photos}
+              onAddPhotos={handleAddPhotos}
+              onDeletePhoto={handleDeletePhoto}
+              onAddComment={handleAddComment}
+              onLikePhoto={handleLikePhoto}
+            />
+          )}
         </View>
 
         {/* Sections additionnelles */}

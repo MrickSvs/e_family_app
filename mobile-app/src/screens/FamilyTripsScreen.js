@@ -73,7 +73,21 @@ const DestinationsSection = ({ destinations, onDestinationPress }) => {
   );
 };
 
-const SearchBar = ({ onSearch }) => {
+const SearchBar = ({ onSearch, destinations, onDestinationPress }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showResults, setShowResults] = useState(false);
+
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+    onSearch(text);
+    setShowResults(true);
+  };
+
+  const filteredDestinations = destinations.filter(destination =>
+    destination.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    destination.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.searchContainer}>
       <View style={styles.searchBar}>
@@ -82,9 +96,37 @@ const SearchBar = ({ onSearch }) => {
           style={styles.searchInput}
           placeholder="Rechercher une destination..."
           placeholderTextColor="#666666"
-          onChangeText={onSearch}
+          value={searchQuery}
+          onChangeText={handleSearch}
+          onFocus={() => setShowResults(true)}
         />
       </View>
+      {showResults && searchQuery.length > 0 && (
+        <View style={styles.searchResults}>
+          {filteredDestinations.map((destination) => (
+            <TouchableOpacity
+              key={destination.id}
+              style={styles.searchResultItem}
+              onPress={() => {
+                onDestinationPress(destination);
+                setShowResults(false);
+                setSearchQuery('');
+              }}
+            >
+              <Image
+                source={{ uri: destination.image_url }}
+                style={styles.searchResultImage}
+              />
+              <View style={styles.searchResultInfo}>
+                <Text style={styles.searchResultName}>{destination.name}</Text>
+                <Text style={styles.searchResultDescription} numberOfLines={1}>
+                  {destination.description}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </View>
   );
 };
@@ -97,6 +139,17 @@ export default function FamilyTripsScreen() {
   const [filteredDestinations, setFilteredDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+
+  const toggleFavorite = (itineraryId) => {
+    setFavorites(prev => {
+      if (prev.includes(itineraryId)) {
+        return prev.filter(id => id !== itineraryId);
+      } else {
+        return [...prev, itineraryId];
+      }
+    });
+  };
 
   const fetchData = async () => {
     try {
@@ -213,7 +266,11 @@ export default function FamilyTripsScreen() {
         <FamilyHeader family={familyData} />
       </View>
 
-      <SearchBar onSearch={handleSearch} />
+      <SearchBar 
+        onSearch={handleSearch} 
+        destinations={destinations}
+        onDestinationPress={(destination) => navigation.navigate('Destination', { destination })}
+      />
 
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
@@ -221,27 +278,38 @@ export default function FamilyTripsScreen() {
       >
         <DestinationsSection 
           destinations={filteredDestinations}
-          onDestinationPress={(destination) => navigation.navigate('DestinationDetail', { destination })}
+          onDestinationPress={(destination) => navigation.navigate('Destination', { destination })}
         />
 
         <View style={styles.itinerariesSection}>
           <Text style={styles.sectionTitle}>Vos itinéraires personnalisés</Text>
           {itineraries.map((itinerary) => (
-            <TripCard
-              key={itinerary.id}
-              trip={{
-                id: itinerary.id,
-                title: itinerary.title,
-                duration: `${itinerary.duration} jours`,
-                type: itinerary.type,
-                description: itinerary.description,
-                image_url: itinerary.image_url,
-                tags: itinerary.tags,
-                price: itinerary.price
-              }}
-              onPress={() => navigation.navigate('TripDetail', { trip: itinerary, isPast: false })}
-              familyMembers={familyData?.members || []}
-            />
+            <View key={itinerary.id} style={styles.itineraryCardContainer}>
+              <TripCard
+                trip={{
+                  id: itinerary.id,
+                  title: itinerary.title,
+                  duration: `${itinerary.duration} jours`,
+                  type: itinerary.type,
+                  description: itinerary.description,
+                  image_url: itinerary.image_url,
+                  tags: itinerary.tags,
+                  price: itinerary.price
+                }}
+                onPress={() => navigation.navigate('TripDetail', { trip: itinerary, isPast: false })}
+                familyMembers={familyData?.members || []}
+              />
+              <TouchableOpacity 
+                onPress={() => toggleFavorite(itinerary.id)}
+                style={styles.favoriteButton}
+              >
+                <Ionicons 
+                  name={favorites.includes(itinerary.id) ? "heart" : "heart-outline"} 
+                  size={24} 
+                  color={favorites.includes(itinerary.id) ? "#ff4b4b" : "#666"} 
+                />
+              </TouchableOpacity>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -392,6 +460,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#F7F5ED',
+    position: 'relative',
+    zIndex: 1000,
   },
   searchBar: {
     flexDirection: 'row',
@@ -405,6 +475,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    zIndex: 1001,
   },
   searchIcon: {
     marginRight: 8,
@@ -413,5 +484,71 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#333333',
+  },
+  searchResults: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    marginTop: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 1002,
+    maxHeight: 300,
+    borderWidth: 1,
+    borderColor: '#E5E5E5',
+  },
+  searchResultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  searchResultImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 12,
+    backgroundColor: '#F5F5F5',
+  },
+  searchResultInfo: {
+    flex: 1,
+  },
+  searchResultName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  searchResultDescription: {
+    fontSize: 14,
+    color: '#4A4A4A',
+    lineHeight: 20,
+  },
+  itineraryCardContainer: {
+    position: 'relative',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 20,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });

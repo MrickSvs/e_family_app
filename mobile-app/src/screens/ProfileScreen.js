@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SafeAreaView, View, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Text, ActivityIndicator, Dimensions, Modal } from "react-native";
+import { SafeAreaView, View, ScrollView, TouchableOpacity, StyleSheet, Alert, Image, Text, ActivityIndicator, Dimensions, Modal, Share } from "react-native";
 import { useNavigation, CommonActions, useTheme } from "@react-navigation/native";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -135,6 +135,26 @@ export default function ProfileScreen() {
   const handleCancelEdit = () => {
     setShowMemberEditor(false);
     setEditingMember(null);
+  };
+
+  const handleShare = async (member = null) => {
+    try {
+      const message = member 
+        ? `Rejoins la famille ${profile.family_name} sur Family App ! ${member.first_name} t'invite à partager vos moments en famille.`
+        : `Rejoins la famille ${profile.family_name} sur Family App ! Partageons nos moments en famille ensemble.`;
+        
+      const result = await Share.share({
+        message: message,
+        title: 'Invitation Family App'
+      });
+    } catch (error) {
+      console.error(error);
+      Alert.alert(
+        'Erreur',
+        'Impossible de partager l\'invitation. Veuillez réessayer.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   // Calculer le nombre d'adultes et d'enfants
@@ -427,22 +447,30 @@ export default function ProfileScreen() {
         <View style={styles.familySection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Membres de la famille</Text>
-            <TouchableOpacity 
-              style={styles.addMemberButton}
-              onPress={() => handleEditMember()}
-            >
-              <Ionicons name="add-circle" size={24} color={theme.colors.primary} />
-              <Text style={styles.addMemberText}>Ajouter</Text>
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity 
+                style={styles.inviteButton}
+                onPress={() => handleShare()}
+              >
+                <Ionicons name="share-outline" size={20} color={theme.colors.primary} />
+                <Text style={styles.inviteButtonText}>Inviter la famille</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.addMemberButton}
+                onPress={() => handleEditMember()}
+              >
+                <Ionicons name="add-circle" size={24} color={theme.colors.primary} />
+                <Text style={styles.addMemberText}>Ajouter</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {profile?.members?.map((member) => (
-            <TouchableOpacity
-              key={member.id}
-              style={styles.memberCard}
-              onPress={() => handleEditMember(member)}
-            >
-              <View style={styles.memberInfo}>
+            <View key={member.id} style={styles.memberCard}>
+              <TouchableOpacity
+                style={styles.memberInfo}
+                onPress={() => handleEditMember(member)}
+              >
                 <View style={styles.memberAvatar}>
                   <Text style={styles.memberInitials}>
                     {member.first_name?.[0]}{member.last_name?.[0]}
@@ -454,9 +482,17 @@ export default function ProfileScreen() {
                   </Text>
                   <Text style={styles.memberRole}>{member.role}</Text>
                 </View>
+              </TouchableOpacity>
+              <View style={styles.memberActions}>
+                <TouchableOpacity 
+                  style={styles.memberInviteButton}
+                  onPress={() => handleShare(member)}
+                >
+                  <Ionicons name="share-social-outline" size={20} color={theme.colors.primary} />
+                </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={24} color={theme.colors.text} />
               </View>
-              <Ionicons name="chevron-forward" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -478,7 +514,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F7F5ED',
   },
   scrollView: {
     flex: 1,
@@ -486,7 +522,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#F7F5ED',
     marginBottom: 16,
   },
   profileImageContainer: {
@@ -632,6 +668,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  inviteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#F0F9F6',
+  },
+  inviteButtonText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   addMemberButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -687,6 +742,16 @@ const styles = StyleSheet.create({
   memberRole: {
     fontSize: 14,
     color: '#666',
+  },
+  memberActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  memberInviteButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F0F9F6',
   },
   updatingIndicator: {
     position: 'absolute',

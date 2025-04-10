@@ -1,6 +1,6 @@
 // src/screens/PastTripDetailScreen.js
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { 
   SafeAreaView, 
   View, 
@@ -8,16 +8,58 @@ import {
   ScrollView, 
   Image, 
   TouchableOpacity,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AgencyBlock from "../components/AgencyBlock";
+import FamilyPhotoGallery from "../components/FamilyPhotoGallery";
+import FamilyPhotoService from "../services/FamilyPhotoService";
+import { theme } from "../styles/theme";
 
 export default function PastTripDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { trip } = route.params || {};
+  const [photos, setPhotos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadPhotos();
+  }, []);
+
+  const loadPhotos = async () => {
+    if (trip?.id) {
+      const tripPhotos = await FamilyPhotoService.getPhotos(trip.id);
+      setPhotos(tripPhotos);
+    }
+    setIsLoading(false);
+  };
+
+  const handleAddPhotos = async (tripId) => {
+    const newPhotos = await FamilyPhotoService.addPhotos(tripId);
+    if (newPhotos.length > 0) {
+      setPhotos(prevPhotos => [...prevPhotos, ...newPhotos]);
+    }
+  };
+
+  const handleDeletePhoto = async (tripId, photoId) => {
+    await FamilyPhotoService.deletePhoto(tripId, photoId);
+    setPhotos(prevPhotos => prevPhotos.filter(photo => photo.id !== photoId));
+  };
+
+  const handleAddComment = async (tripId, photoId, comment) => {
+    await FamilyPhotoService.addComment(tripId, photoId, comment);
+    const updatedPhotos = await FamilyPhotoService.getPhotos(tripId);
+    setPhotos(updatedPhotos);
+  };
+
+  const handleLikePhoto = async (tripId, photoId) => {
+    await FamilyPhotoService.likePhoto(tripId, photoId);
+    const updatedPhotos = await FamilyPhotoService.getPhotos(tripId);
+    setPhotos(updatedPhotos);
+  };
 
   console.log('PastTripDetailScreen - route.params:', route.params);
   console.log('PastTripDetailScreen - trip:', trip);
@@ -94,21 +136,21 @@ export default function PastTripDetailScreen() {
             ))}
           </View>
 
-          {/* Photos */}
-          {trip.gallery && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Galerie photos</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {trip.gallery.map((photo, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri: photo }}
-                    style={styles.galleryImage}
-                  />
-                ))}
-              </ScrollView>
-            </View>
-          )}
+          {/* Galerie photos familiales */}
+          <View style={styles.section}>
+            {isLoading ? (
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            ) : (
+              <FamilyPhotoGallery
+                tripId={trip.id}
+                photos={photos}
+                onAddPhotos={handleAddPhotos}
+                onDeletePhoto={handleDeletePhoto}
+                onAddComment={handleAddComment}
+                onLikePhoto={handleLikePhoto}
+              />
+            )}
+          </View>
 
           <AgencyBlock 
             agency={{
@@ -212,12 +254,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     lineHeight: 20,
-  },
-  galleryImage: {
-    width: 200,
-    height: 150,
-    marginRight: 12,
-    borderRadius: 8,
   },
   errorText: {
     fontSize: 16,

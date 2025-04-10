@@ -24,6 +24,8 @@ import PastTripDetailScreen from './src/screens/PastTripDetailScreen';
 import TripDetailScreen from './src/screens/TripDetailScreen';
 import CurrentTripDetailScreen from './src/screens/CurrentTripDetailScreen';
 import PendingQuoteDetailScreen from './src/screens/PendingQuoteDetailScreen';
+import FavoritesScreen from './src/screens/FavoritesScreen';
+import DestinationScreen from './src/screens/DestinationScreen';
 
 const OnboardingStack = createNativeStackNavigator();
 const MainStack = createNativeStackNavigator();
@@ -81,6 +83,8 @@ function MainNavigator() {
             iconName = focused ? 'map' : 'map-outline';
           } else if (route.name === 'MyTrips') {
             iconName = focused ? 'calendar' : 'calendar-outline';
+          } else if (route.name === 'Favorites') {
+            iconName = focused ? 'heart' : 'heart-outline';
           } else if (route.name === 'Messagerie') {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
           } else if (route.name === 'Profile') {
@@ -96,6 +100,11 @@ function MainNavigator() {
         name="FamilyTrips" 
         component={FamilyTripsScreen}
         options={{ tabBarLabel: 'Itinéraires' }}
+      />
+      <Tab.Screen 
+        name="Favorites" 
+        component={FavoritesScreen}
+        options={{ tabBarLabel: 'Favoris' }}
       />
       <Tab.Screen 
         name="MyTrips" 
@@ -132,6 +141,7 @@ function RootNavigator() {
       <MainStack.Screen name="Onboarding" component={OnboardingNavigator} />
       <MainStack.Screen name="Main" component={MainNavigator} />
       <MainStack.Screen name="TripDetail" component={TripDetailScreen} />
+      <MainStack.Screen name="Destination" component={DestinationScreen} />
     </MainStack.Navigator>
   );
 }

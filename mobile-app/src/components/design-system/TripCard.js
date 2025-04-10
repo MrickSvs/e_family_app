@@ -23,13 +23,36 @@ export const TripCard = ({
   onPress,
   style,
   familyMembers = [], // Ajout des membres de la famille
+  type = 'current', // Type de voyage : 'current', 'upcoming', 'pending', 'past'
 }) => {
   // Générer aléatoirement les membres qui aiment l'itinéraire
   const likingMembers = getRandomLikingMembers(familyMembers);
 
+  const renderParticipants = (participants) => {
+    if (!participants) return null;
+
+    return (
+      <View style={styles.participantsContainer}>
+        <View style={styles.participantsList}>
+          {participants.map((participant, index) => (
+            <View key={participant.id} style={styles.participantAvatar}>
+              <Image 
+                source={{ uri: participant.avatar }} 
+                style={styles.avatarImage}
+              />
+            </View>
+          ))}
+        </View>
+        <Text style={styles.participantsCount}>
+          {participants.length} participant{participants.length > 1 ? 's' : ''}
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <TouchableOpacity 
-      style={[styles.container, style]}
+      style={[styles.container, style, type === 'pending' && styles.pendingCard]}
       onPress={onPress}
       activeOpacity={0.9}
     >
@@ -63,6 +86,8 @@ export const TripCard = ({
         <Text style={styles.description} numberOfLines={2}>
           {trip.description}
         </Text>
+
+        {renderParticipants(trip.participants)}
         
         <View style={styles.tagContainer}>
           {trip.tags?.map((tag, index) => (
@@ -84,6 +109,22 @@ export const TripCard = ({
             </View>
           ))}
         </View>
+
+        {type === 'pending' && (
+          <View style={styles.pendingStatus}>
+            <Text style={styles.pendingStatusText}>{trip.status}</Text>
+          </View>
+        )}
+
+        {type === 'past' && (
+          <View style={styles.ratingContainer}>
+            {[...Array(5)].map((_, i) => (
+              <Text key={i} style={styles.ratingStar}>
+                {i < trip.rating ? "★" : "☆"}
+              </Text>
+            ))}
+          </View>
+        )}
 
         {trip.price && (
           <View style={styles.priceContainer}>
@@ -174,6 +215,32 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 16,
   },
+  participantsContainer: {
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  participantsList: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  participantAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: -8,
+    borderWidth: 2,
+    borderColor: '#fff',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  participantsCount: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
   tagContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -217,5 +284,31 @@ const styles = StyleSheet.create({
   priceDetails: {
     fontSize: 14,
     color: '#666',
+  },
+  pendingCard: {
+    borderWidth: 1,
+    borderColor: "#FFA500",
+    borderStyle: "dashed",
+  },
+  pendingStatus: {
+    backgroundColor: "#FFF3E0",
+    padding: 4,
+    borderRadius: 4,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  pendingStatusText: {
+    color: "#FFA500",
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    marginTop: 4,
+  },
+  ratingStar: {
+    color: "#ffd700",
+    fontSize: 16,
+    marginRight: 2,
   },
 });
