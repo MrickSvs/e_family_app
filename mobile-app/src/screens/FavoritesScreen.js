@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   SafeAreaView, 
   View, 
@@ -7,11 +7,13 @@ import {
   TouchableOpacity, 
   Image,
   StyleSheet,
-  Dimensions 
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../styles/theme';
+import { getFamilyInfo } from '../services/familyService';
 
 const { width } = Dimensions.get('window');
 
@@ -52,7 +54,7 @@ const FavoriteTripCard = ({ trip, onPress }) => {
   );
 };
 
-const FamilyMemberSelector = ({ members, selectedMember, onSelectMember }) => {
+const FamilyMemberSelector = ({ members, selectedMember, onSelectMember, firstAdult }) => {
   return (
     <ScrollView 
       horizontal 
@@ -60,23 +62,25 @@ const FamilyMemberSelector = ({ members, selectedMember, onSelectMember }) => {
       style={styles.memberSelector}
       contentContainerStyle={styles.memberSelectorContent}
     >
-      <TouchableOpacity 
-        style={[
-          styles.memberButton, 
-          selectedMember === 'me' && styles.memberButtonActive
-        ]} 
-        onPress={() => onSelectMember('me')}
-      >
-        <Ionicons 
-          name="person-circle-outline" 
-          size={24} 
-          color={selectedMember === 'me' ? '#fff' : '#666'} 
-        />
-        <Text style={[
-          styles.memberButtonText,
-          selectedMember === 'me' && styles.memberButtonTextActive
-        ]}>Moi</Text>
-      </TouchableOpacity>
+      {firstAdult && (
+        <TouchableOpacity 
+          style={[
+            styles.memberButton, 
+            selectedMember === firstAdult.id && styles.memberButtonActive
+          ]} 
+          onPress={() => onSelectMember(firstAdult.id)}
+        >
+          <Ionicons 
+            name="person-circle-outline" 
+            size={24} 
+            color={selectedMember === firstAdult.id ? '#fff' : '#666'} 
+          />
+          <Text style={[
+            styles.memberButtonText,
+            selectedMember === firstAdult.id && styles.memberButtonTextActive
+          ]}>{firstAdult.name}</Text>
+        </TouchableOpacity>
+      )}
       
       {members.map((member) => (
         <TouchableOpacity 
@@ -104,19 +108,59 @@ const FamilyMemberSelector = ({ members, selectedMember, onSelectMember }) => {
 
 export default function FavoritesScreen() {
   const navigation = useNavigation();
-  const [selectedMember, setSelectedMember] = useState('me');
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [firstAdult, setFirstAdult] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Exemple de données de membres de la famille
-  const familyMembers = [
-    { id: 'mom', name: 'Maman' },
-    { id: 'dad', name: 'Papa' },
-    { id: 'sister', name: 'Emma' },
-    { id: 'brother', name: 'Lucas' }
-  ];
+  useFocusEffect(
+    useCallback(() => {
+      loadFamilyData();
+    }, [])
+  );
 
-  // Exemple de données de favoris par membre
+  const loadFamilyData = async () => {
+    try {
+      setLoading(true);
+      const familyInfo = await getFamilyInfo();
+      
+      if (familyInfo && familyInfo.members) {
+        const adults = familyInfo.members.filter(member => member.role === 'Adulte');
+        const firstAdultMember = adults.length > 0 ? adults[0] : null;
+        
+        const formattedMembers = familyInfo.members
+          .filter(member => member.id !== firstAdultMember?.id)
+          .map(member => ({
+            id: member.id.toString(),
+            name: member.first_name
+          }));
+        
+        setFamilyMembers(formattedMembers);
+        
+        if (firstAdultMember) {
+          const formattedFirstAdult = {
+            id: firstAdultMember.id.toString(),
+            name: firstAdultMember.first_name
+          };
+          setFirstAdult(formattedFirstAdult);
+          setSelectedMember(formattedFirstAdult.id);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading family data:', err);
+      setError('Impossible de charger les données de la famille');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const favoritesByMember = {
-    me: [
+    // Les favoris seront ajoutés dynamiquement pour chaque membre
+  };
+
+  if (firstAdult) {
+    favoritesByMember[firstAdult.id] = [
       {
         id: 1,
         title: "Costa Rica en famille",
@@ -144,49 +188,48 @@ export default function FavoritesScreen() {
         tags: ["Plage", "Luxe", "Relaxation", "Snorkeling"],
         familySize: "2 adultes, 1 enfant"
       }
-    ],
-    mom: [
-      {
-        id: 3,
-        title: "Circuit Vietnam",
-        date: "Avril 2023",
-        image_url: "https://images.unsplash.com/photo-1557750255-c76072a7aad1",
-        description: "Découverte du Vietnam en famille",
-        duration: "14 jours",
-        type: "Circuit culturel",
-        price: "2800€ / personne",
-        priceDetails: "Vol + Hébergement + Guide",
-        tags: ["Culture", "Gastronomie", "Histoire", "Nature"],
-        familySize: "2 adultes, 3 enfants"
-      }
-    ],
-    dad: [
-      {
-        id: 4,
-        title: "Safari en Afrique du Sud",
-        date: "Juillet 2024",
-        image_url: "https://images.unsplash.com/photo-1516426122078-c23e76319801",
-        description: "Aventure safari pour toute la famille",
-        duration: "12 jours",
-        type: "Safari",
-        price: "4200€ / personne",
-        priceDetails: "Vol + Lodge + Safari",
-        tags: ["Safari", "Nature", "Aventure", "Animaux"],
-        familySize: "2 adultes, 2 enfants"
-      }
-    ],
-    sister: [],
-    brother: []
-  };
+    ];
+  }
 
-  const currentFavorites = favoritesByMember[selectedMember] || [];
+  familyMembers.forEach(member => {
+    if (!favoritesByMember[member.id]) {
+      favoritesByMember[member.id] = [];
+    }
+  });
+
+  const currentFavorites = selectedMember ? favoritesByMember[selectedMember] || [] : [];
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Chargement des membres de la famille...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={64} color="#ff6b6b" />
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadFamilyData}>
+            <Text style={styles.retryButtonText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Favoris</Text>
         <Text style={styles.subtitle}>
-          {selectedMember === 'me' 
+          {selectedMember === firstAdult?.id
             ? `${currentFavorites.length} voyages sauvegardés` 
             : `Favoris de ${familyMembers.find(m => m.id === selectedMember)?.name || ''}`}
         </Text>
@@ -196,6 +239,7 @@ export default function FavoritesScreen() {
         members={familyMembers}
         selectedMember={selectedMember}
         onSelectMember={setSelectedMember}
+        firstAdult={firstAdult}
       />
 
       <ScrollView style={styles.content}>
@@ -211,7 +255,7 @@ export default function FavoritesScreen() {
           <View style={styles.emptyState}>
             <Ionicons name="heart-outline" size={64} color="#ccc" />
             <Text style={styles.emptyStateText}>
-              {selectedMember === 'me' 
+              {selectedMember === firstAdult?.id
                 ? "Vous n'avez pas encore de favoris" 
                 : `${familyMembers.find(m => m.id === selectedMember)?.name || ''} n'a pas encore de favoris`}
             </Text>
@@ -226,6 +270,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F5ED',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     padding: 16,
