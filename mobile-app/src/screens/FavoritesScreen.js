@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   SafeAreaView, 
   View, 
@@ -52,62 +52,155 @@ const FavoriteTripCard = ({ trip, onPress }) => {
   );
 };
 
+const FamilyMemberSelector = ({ members, selectedMember, onSelectMember }) => {
+  return (
+    <ScrollView 
+      horizontal 
+      showsHorizontalScrollIndicator={false}
+      style={styles.memberSelector}
+      contentContainerStyle={styles.memberSelectorContent}
+    >
+      <TouchableOpacity 
+        style={[
+          styles.memberButton, 
+          selectedMember === 'me' && styles.memberButtonActive
+        ]} 
+        onPress={() => onSelectMember('me')}
+      >
+        <Ionicons 
+          name="person-circle-outline" 
+          size={24} 
+          color={selectedMember === 'me' ? '#fff' : '#666'} 
+        />
+        <Text style={[
+          styles.memberButtonText,
+          selectedMember === 'me' && styles.memberButtonTextActive
+        ]}>Moi</Text>
+      </TouchableOpacity>
+      
+      {members.map((member) => (
+        <TouchableOpacity 
+          key={member.id}
+          style={[
+            styles.memberButton, 
+            selectedMember === member.id && styles.memberButtonActive
+          ]} 
+          onPress={() => onSelectMember(member.id)}
+        >
+          <Ionicons 
+            name="person-circle-outline" 
+            size={24} 
+            color={selectedMember === member.id ? '#fff' : '#666'} 
+          />
+          <Text style={[
+            styles.memberButtonText,
+            selectedMember === member.id && styles.memberButtonTextActive
+          ]}>{member.name}</Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+};
+
 export default function FavoritesScreen() {
   const navigation = useNavigation();
+  const [selectedMember, setSelectedMember] = useState('me');
 
-  const favorites = [
-    {
-      id: 1,
-      title: "Costa Rica en famille",
-      date: "15-30 Août 2024",
-      image_url: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/08/03/6d2d255d-c122-4ef7-99ab-80624f563bb6.jpg",
-      progress: 60,
-      description: "Découverte du Costa Rica en famille : volcans, plages paradisiaques et forêts tropicales",
-      duration: "10 jours",
-      type: "Circuit nature et plage",
-      price: "3200€ / personne",
-      priceDetails: "Vol + Hébergement + Transport",
-      tags: ["Nature", "Plage", "Famille", "Aventure"],
-      familySize: "2 adultes, 2 enfants"
-    },
-    {
-      id: 2,
-      title: "Séjour aux Maldives",
-      date: "En cours de préparation",
-      image_url: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8",
-      description: "Un paradis tropical pour toute la famille",
-      duration: "10 jours",
-      type: "Séjour balnéaire",
-      price: "3500€ / personne",
-      priceDetails: "Vol + Resort tout inclus",
-      tags: ["Plage", "Luxe", "Relaxation", "Snorkeling"],
-      familySize: "2 adultes, 1 enfant"
-    },
-    {
-      id: 3,
-      title: "Circuit Vietnam",
-      date: "Avril 2023",
-      image_url: "https://images.unsplash.com/photo-1557750255-c76072a7aad1",
-      description: "Découverte du Vietnam en famille",
-      duration: "14 jours",
-      type: "Circuit culturel",
-      price: "2800€ / personne",
-      priceDetails: "Vol + Hébergement + Guide",
-      tags: ["Culture", "Gastronomie", "Histoire", "Nature"],
-      familySize: "2 adultes, 3 enfants"
-    }
+  // Exemple de données de membres de la famille
+  const familyMembers = [
+    { id: 'mom', name: 'Maman' },
+    { id: 'dad', name: 'Papa' },
+    { id: 'sister', name: 'Emma' },
+    { id: 'brother', name: 'Lucas' }
   ];
+
+  // Exemple de données de favoris par membre
+  const favoritesByMember = {
+    me: [
+      {
+        id: 1,
+        title: "Costa Rica en famille",
+        date: "15-30 Août 2024",
+        image_url: "https://static1.evcdn.net/cdn-cgi/image/width=1400,height=1050,quality=70,fit=crop/offer/raw/2022/08/03/6d2d255d-c122-4ef7-99ab-80624f563bb6.jpg",
+        progress: 60,
+        description: "Découverte du Costa Rica en famille : volcans, plages paradisiaques et forêts tropicales",
+        duration: "10 jours",
+        type: "Circuit nature et plage",
+        price: "3200€ / personne",
+        priceDetails: "Vol + Hébergement + Transport",
+        tags: ["Nature", "Plage", "Famille", "Aventure"],
+        familySize: "2 adultes, 2 enfants"
+      },
+      {
+        id: 2,
+        title: "Séjour aux Maldives",
+        date: "En cours de préparation",
+        image_url: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8",
+        description: "Un paradis tropical pour toute la famille",
+        duration: "10 jours",
+        type: "Séjour balnéaire",
+        price: "3500€ / personne",
+        priceDetails: "Vol + Resort tout inclus",
+        tags: ["Plage", "Luxe", "Relaxation", "Snorkeling"],
+        familySize: "2 adultes, 1 enfant"
+      }
+    ],
+    mom: [
+      {
+        id: 3,
+        title: "Circuit Vietnam",
+        date: "Avril 2023",
+        image_url: "https://images.unsplash.com/photo-1557750255-c76072a7aad1",
+        description: "Découverte du Vietnam en famille",
+        duration: "14 jours",
+        type: "Circuit culturel",
+        price: "2800€ / personne",
+        priceDetails: "Vol + Hébergement + Guide",
+        tags: ["Culture", "Gastronomie", "Histoire", "Nature"],
+        familySize: "2 adultes, 3 enfants"
+      }
+    ],
+    dad: [
+      {
+        id: 4,
+        title: "Safari en Afrique du Sud",
+        date: "Juillet 2024",
+        image_url: "https://images.unsplash.com/photo-1516426122078-c23e76319801",
+        description: "Aventure safari pour toute la famille",
+        duration: "12 jours",
+        type: "Safari",
+        price: "4200€ / personne",
+        priceDetails: "Vol + Lodge + Safari",
+        tags: ["Safari", "Nature", "Aventure", "Animaux"],
+        familySize: "2 adultes, 2 enfants"
+      }
+    ],
+    sister: [],
+    brother: []
+  };
+
+  const currentFavorites = favoritesByMember[selectedMember] || [];
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mes Favoris</Text>
-        <Text style={styles.subtitle}>{favorites.length} voyages sauvegardés</Text>
+        <Text style={styles.title}>Favoris</Text>
+        <Text style={styles.subtitle}>
+          {selectedMember === 'me' 
+            ? `${currentFavorites.length} voyages sauvegardés` 
+            : `Favoris de ${familyMembers.find(m => m.id === selectedMember)?.name || ''}`}
+        </Text>
       </View>
 
+      <FamilyMemberSelector 
+        members={familyMembers}
+        selectedMember={selectedMember}
+        onSelectMember={setSelectedMember}
+      />
+
       <ScrollView style={styles.content}>
-        {favorites.length > 0 ? (
-          favorites.map(trip => (
+        {currentFavorites.length > 0 ? (
+          currentFavorites.map(trip => (
             <FavoriteTripCard
               key={trip.id}
               trip={trip}
@@ -117,7 +210,11 @@ export default function FavoritesScreen() {
         ) : (
           <View style={styles.emptyState}>
             <Ionicons name="heart-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyStateText}>Vous n'avez pas encore de favoris</Text>
+            <Text style={styles.emptyStateText}>
+              {selectedMember === 'me' 
+                ? "Vous n'avez pas encore de favoris" 
+                : `${familyMembers.find(m => m.id === selectedMember)?.name || ''} n'a pas encore de favoris`}
+            </Text>
           </View>
         )}
       </ScrollView>
@@ -145,6 +242,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  memberSelector: {
+    maxHeight: 80,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+  },
+  memberSelectorContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  memberButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  memberButtonActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  memberButtonText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
+  },
+  memberButtonTextActive: {
+    color: '#fff',
   },
   content: {
     flex: 1,
@@ -249,5 +376,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 16,
+    textAlign: 'center',
   },
 }); 

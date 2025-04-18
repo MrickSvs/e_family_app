@@ -89,6 +89,36 @@ const MOCK_ACTIVITIES = [
 
 const FAMILY_MEMBERS = ["Papa", "Maman", "Julie"];
 
+const MOCK_ESIM_DATA = {
+  available: true,
+  plans: [
+    {
+      id: 1,
+      name: "Découverte",
+      data: "3 Go",
+      duration: "7 jours",
+      price: 19.99,
+      features: ["Data 4G/5G", "Appels locaux inclus", "SMS illimités"]
+    },
+    {
+      id: 2,
+      name: "Confort",
+      data: "10 Go",
+      duration: "15 jours",
+      price: 29.99,
+      features: ["Data 4G/5G", "Appels locaux et internationaux", "SMS illimités", "Hotspot inclus"]
+    },
+    {
+      id: 3,
+      name: "Premium",
+      data: "Illimité",
+      duration: "30 jours",
+      price: 49.99,
+      features: ["Data 4G/5G illimitée", "Appels monde entier", "SMS illimités", "Hotspot illimité"]
+    }
+  ]
+};
+
 export default function UpcomingTripDetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -170,6 +200,26 @@ export default function UpcomingTripDetailScreen() {
     assignedTo: '',
     deadline: ''
   });
+
+  // États pour la gestion des eSIM
+  const [showEsimModal, setShowEsimModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [esimOrdered, setEsimOrdered] = useState(false);
+
+  // Handlers pour la gestion des eSIM
+  const handleOrderEsim = (plan) => {
+    setSelectedPlan(plan);
+    setShowEsimModal(true);
+  };
+
+  const confirmEsimOrder = () => {
+    setEsimOrdered(true);
+    setShowEsimModal(false);
+    Alert.alert(
+      "Commande confirmée !",
+      `Votre eSIM ${selectedPlan.name} sera disponible 24h avant votre départ. Vous recevrez un email avec les instructions d'installation.`
+    );
+  };
 
   // Calcul du compte à rebours
   const calculateCountdown = () => {
@@ -617,9 +667,95 @@ export default function UpcomingTripDetailScreen() {
                 </View>
               </View>
             </View>
+
+            {/* Section eSIM */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Connectivité mobile</Text>
+              {!esimOrdered ? (
+                <View style={styles.esimContainer}>
+                  <Text style={styles.esimTitle}>eSIM disponible pour votre destination</Text>
+                  <Text style={styles.esimDescription}>
+                    Restez connecté pendant votre voyage avec une eSIM locale.
+                  </Text>
+                  {MOCK_ESIM_DATA.plans.map((plan) => (
+                    <TouchableOpacity
+                      key={plan.id}
+                      style={styles.esimPlanCard}
+                      onPress={() => handleOrderEsim(plan)}
+                    >
+                      <View style={styles.esimPlanHeader}>
+                        <Text style={styles.esimPlanName}>{plan.name}</Text>
+                        <Text style={styles.esimPlanPrice}>{plan.price}€</Text>
+                      </View>
+                      <View style={styles.esimPlanDetails}>
+                        <View style={styles.esimPlanFeature}>
+                          <Ionicons name="time-outline" size={16} color="#666" />
+                          <Text style={styles.esimPlanFeatureText}>{plan.duration}</Text>
+                        </View>
+                        <View style={styles.esimPlanFeature}>
+                          <Ionicons name="cellular-outline" size={16} color="#666" />
+                          <Text style={styles.esimPlanFeatureText}>{plan.data}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.esimPlanFeatures}>
+                        {plan.features.map((feature, index) => (
+                          <View key={index} style={styles.esimFeatureItem}>
+                            <Ionicons name="checkmark-circle-outline" size={16} color="#0f8066" />
+                            <Text style={styles.esimFeatureText}>{feature}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.esimOrderedContainer}>
+                  <Ionicons name="checkmark-circle" size={40} color="#0f8066" />
+                  <Text style={styles.esimOrderedTitle}>eSIM commandée</Text>
+                  <Text style={styles.esimOrderedDescription}>
+                    Vous recevrez votre eSIM par email 24h avant votre départ
+                  </Text>
+                </View>
+              )}
+            </View>
           </>
         )}
       </ScrollView>
+
+      {/* Modal de confirmation eSIM */}
+      <Modal
+        visible={showEsimModal}
+        animationType="slide"
+        transparent={true}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirmer votre commande</Text>
+            {selectedPlan && (
+              <>
+                <Text style={styles.modalPlanName}>{selectedPlan.name}</Text>
+                <Text style={styles.modalPlanPrice}>{selectedPlan.price}€</Text>
+                <Text style={styles.modalPlanDuration}>{selectedPlan.duration}</Text>
+                <Text style={styles.modalPlanData}>{selectedPlan.data}</Text>
+              </>
+            )}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setShowEsimModal(false)}
+              >
+                <Text style={styles.modalButtonTextCancel}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={confirmEsimOrder}
+              >
+                <Text style={styles.modalButtonTextConfirm}>Confirmer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1044,5 +1180,153 @@ const styles = StyleSheet.create({
   },
   assigneeButtonTextActive: {
     color: '#fff',
+  },
+  esimContainer: {
+    padding: 16,
+  },
+  esimTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  esimDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+  },
+  esimPlanCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  esimPlanHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  esimPlanName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  esimPlanPrice: {
+    fontSize: 14,
+    color: '#666',
+  },
+  esimPlanDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  esimPlanFeature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  esimPlanFeatureText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  esimPlanFeatures: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  esimFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  esimFeatureText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  esimOrderedContainer: {
+    alignItems: 'center',
+    padding: 16,
+  },
+  esimOrderedTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  esimOrderedDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 8,
+    width: '80%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  modalPlanName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  modalPlanPrice: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  modalPlanDuration: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  modalPlanData: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalButton: {
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#0f8066',
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#ff0000',
+  },
+  modalButtonConfirm: {
+    backgroundColor: '#0f8066',
+  },
+  modalButtonTextCancel: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalButtonTextConfirm: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
