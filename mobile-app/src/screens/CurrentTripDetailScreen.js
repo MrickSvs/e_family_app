@@ -21,6 +21,8 @@ import AgencyBlock from "../components/AgencyBlock";
 import DayDetailModal from "../components/DayDetailModal";
 import FamilyPhotoGallery from "../components/FamilyPhotoGallery";
 import FamilyPhotoService from "../services/FamilyPhotoService";
+import ShareTripModal from "../components/ShareTripModal";
+import TripSocialSection from "../components/TripSocialSection";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48; // Largeur de la carte avec marges
@@ -143,8 +145,10 @@ export default function CurrentTripDetailScreen() {
   const [focusedStepIndex, setFocusedStepIndex] = useState(currentDayIndex);
   const [selectedDay, setSelectedDay] = useState(null);
   const [isDayDetailModalVisible, setIsDayDetailModalVisible] = useState(false);
+  const [isShareModalVisible, setIsShareModalVisible] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
+  const [activeTab, setActiveTab] = useState('itinerary'); // 'itinerary', 'photos', 'social'
   const flatListRef = useRef(null);
 
   useEffect(() => {
@@ -334,55 +338,112 @@ export default function CurrentTripDetailScreen() {
             <Text style={styles.headerDates}>{trip.date}</Text>
           </View>
         </View>
+        <TouchableOpacity 
+          style={styles.shareButton}
+          onPress={() => setIsShareModalVisible(true)}
+        >
+          <Ionicons name="share-social-outline" size={24} color={theme.colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Tabs de navigation */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'itinerary' && styles.activeTab]}
+          onPress={() => setActiveTab('itinerary')}
+        >
+          <Ionicons 
+            name="map-outline" 
+            size={20} 
+            color={activeTab === 'itinerary' ? theme.colors.primary : '#666'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'itinerary' && styles.activeTabText]}>
+            Itinéraire
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'photos' && styles.activeTab]}
+          onPress={() => setActiveTab('photos')}
+        >
+          <Ionicons 
+            name="images-outline" 
+            size={20} 
+            color={activeTab === 'photos' ? theme.colors.primary : '#666'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'photos' && styles.activeTabText]}>
+            Photos
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'social' && styles.activeTab]}
+          onPress={() => setActiveTab('social')}
+        >
+          <Ionicons 
+            name="people-outline" 
+            size={20} 
+            color={activeTab === 'social' ? theme.colors.primary : '#666'} 
+          />
+          <Text style={[styles.tabText, activeTab === 'social' && styles.activeTabText]}>
+            Social
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Section principale : Carte + Carrousel */}
-        <View style={styles.mainSection}>
-          {/* Carte interactive */}
-          <TripMap 
-            steps={MOCK_TRIP_STEPS}
-            initialRegion={INITIAL_REGION}
-            focusedStepIndex={focusedStepIndex}
-          />
-
-          {/* Carrousel des étapes */}
-          <FlatList
-            ref={flatListRef}
-            data={MOCK_TRIP_STEPS}
-            renderItem={renderStepCard}
-            keyExtractor={(_, index) => index.toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
-            decelerationRate="fast"
-            getItemLayout={getItemLayout}
-            contentContainerStyle={styles.carouselContent}
-            onMomentumScrollEnd={(event) => {
-              const newIndex = Math.round(
-                event.nativeEvent.contentOffset.x / (CARD_WIDTH + CARD_MARGIN * 2)
-              );
-              onStepChange(newIndex);
-            }}
-            initialScrollIndex={currentDayIndex}
-          />
-        </View>
-
-        {/* Galerie photos familiales */}
-        <View style={styles.section}>
-          {isLoadingPhotos ? (
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-          ) : (
-            <FamilyPhotoGallery
-              tripId={trip.id}
-              photos={photos}
-              onAddPhotos={handleAddPhotos}
-              onDeletePhoto={handleDeletePhoto}
-              onAddComment={handleAddComment}
-              onLikePhoto={handleLikePhoto}
+        {activeTab === 'itinerary' && (
+          <View style={styles.mainSection}>
+            {/* Carte interactive */}
+            <TripMap 
+              steps={MOCK_TRIP_STEPS}
+              initialRegion={INITIAL_REGION}
+              focusedStepIndex={focusedStepIndex}
             />
-          )}
-        </View>
+
+            {/* Carrousel des étapes */}
+            <FlatList
+              ref={flatListRef}
+              data={MOCK_TRIP_STEPS}
+              renderItem={renderStepCard}
+              keyExtractor={(_, index) => index.toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
+              decelerationRate="fast"
+              getItemLayout={getItemLayout}
+              contentContainerStyle={styles.carouselContent}
+              onMomentumScrollEnd={(event) => {
+                const newIndex = Math.round(
+                  event.nativeEvent.contentOffset.x / (CARD_WIDTH + CARD_MARGIN * 2)
+                );
+                onStepChange(newIndex);
+              }}
+              initialScrollIndex={currentDayIndex}
+            />
+          </View>
+        )}
+
+        {activeTab === 'photos' && (
+          <View style={styles.section}>
+            {isLoadingPhotos ? (
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+            ) : (
+              <FamilyPhotoGallery
+                tripId={trip.id}
+                photos={photos}
+                onAddPhotos={handleAddPhotos}
+                onDeletePhoto={handleDeletePhoto}
+                onAddComment={handleAddComment}
+                onLikePhoto={handleLikePhoto}
+              />
+            )}
+          </View>
+        )}
+
+        {activeTab === 'social' && (
+          <View style={styles.section}>
+            <TripSocialSection tripId={trip.id} />
+          </View>
+        )}
 
         {/* Sections additionnelles */}
         <View style={styles.section}>
@@ -421,6 +482,12 @@ export default function CurrentTripDetailScreen() {
           console.log('Saving feedback:', feedback);
           setIsDayDetailModalVisible(false);
         }}
+      />
+
+      <ShareTripModal
+        visible={isShareModalVisible}
+        onClose={() => setIsShareModalVisible(false)}
+        trip={trip}
       />
     </SafeAreaView>
   );
@@ -634,5 +701,37 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  shareButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F7F5ED',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    paddingHorizontal: 16,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.primary,
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+  },
+  activeTabText: {
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
 }); 
